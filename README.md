@@ -118,8 +118,9 @@ Open them from the popup or from the extension's *Details → Extension options*
 - **It mutes all audio, not just one voice.** If others speak while he holds the floor, they are muted too.
   Separating voices in real time would need a source-separation model, which is far more complex.
 - **It depends on the caption.** If the broadcast changes its caption layout, adjust the caption position. A speech
-  can start without a caption: at 4:00:30 in the replay he speaks for about 40 s over wide shots and applause before
-  his caption first appears at 4:01:12. Use the shortcut for that.
+  can start without a caption: when his caption first appears at 4:01:12 in the replay, the on-screen speaking
+  timer already shows 0:59, and the shots before it are wide shots and applause with no name. Use the shortcut
+  for that part.
 - **The first second or two may be heard.** The mute starts on the first frame where the caption is read.
 - **Background tabs.** Chrome slows down timers and may stop drawing video in hidden tabs, so detection can lag
   there. For reliable results keep the video visible: its own window, or picture-in-picture.
