@@ -1,4 +1,4 @@
-# Shut Down 577
+# Neleceni
 
 A Chrome extension that mutes a YouTube video while a chosen speaker holds the floor.
 
@@ -128,7 +128,7 @@ Written in **TypeScript**, bundled with **esbuild**, no UI framework.
 npm run typecheck   # tsc --noEmit
 npm test            # node --test (runs the .ts tests directly)
 npm run check       # all of the above + build
-npm run zip         # build and pack dist/ into shut-down-577.zip for the Web Store
+npm run zip         # build and pack dist/ into neleceni.zip for the Web Store
 ```
 
 ```

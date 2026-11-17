@@ -53,7 +53,7 @@ export class AudioGate {
       this.gains.set(video, gain);
       return gain;
     } catch (err) {
-      console.warn('[shut-down-577] Web Audio routing failed, using video.muted instead:', err);
+      console.warn('[neleceni] Web Audio routing failed, using video.muted instead:', err);
       return null;
     }
   }

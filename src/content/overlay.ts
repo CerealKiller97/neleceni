@@ -47,7 +47,7 @@ export class Overlay {
 
   private build(): HTMLDivElement {
     const host = document.createElement('div');
-    host.id = 'shut-down-577-overlay';
+    host.id = 'neleceni-overlay';
     const root = host.attachShadow({ mode: 'open' });
     const style = document.createElement('style');
     style.textContent = CSS;
@@ -56,7 +56,7 @@ export class Overlay {
 
     this.pill = document.createElement('div');
     this.pill.className = 'pill';
-    this.pill.title = 'Shut Down 577: click (or Alt+Shift+M) to mute or un-mute by hand';
+    this.pill.title = 'Neleceni: click (or Alt+Shift+M) to mute or un-mute by hand';
     const dot = document.createElement('span');
     dot.className = 'dot';
     this.label = document.createElement('span');

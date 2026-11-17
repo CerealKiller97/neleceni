@@ -1,5 +1,5 @@
 {
-  "name": "shut-down-577",
+  "name": "neleceni",
   "version": "0.1.0",
   "private": true,
   "description": "Chrome extension that mutes a YouTube stream while a chosen speaker holds the floor, by reading the on-screen name caption.",
@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test \"test/**/*.test.ts\"",
     "check": "npm run typecheck && npm test && npm run build",
-    "zip": "npm run build && cd dist && zip -qr ../shut-down-577.zip . && cd .. && echo 'Wrote shut-down-577.zip'"
+    "zip": "npm run build && cd dist && zip -qr ../neleceni.zip . && cd .. && echo 'Wrote neleceni.zip'"
   },
   "engines": {
     "node": ">=23.6"

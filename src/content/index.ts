@@ -12,7 +12,7 @@ import { captureCaption, signatureDistance, type Capture } from './capture.ts';
 import { channelMatches, currentVideoId, ownerChannels } from './channel.ts';
 import { Overlay } from './overlay.ts';
 
-const TAG = '[shut-down-577]';
+const TAG = '[neleceni]';
 /** Below this share of white pixels there is no caption to read. */
 const MIN_INK = 0.002;
 /** Signatures closer than this are treated as the same caption image. */

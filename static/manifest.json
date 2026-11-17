@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Shut Down 577",
-  "short_name": "Shut Down 577",
+  "name": "Neleceni",
+  "short_name": "Neleceni",
   "version": "0.1.0",
   "description": "Mutes a YouTube stream while a chosen speaker holds the floor, by reading the speaker's name caption on screen.",
   "minimum_chrome_version": "116",
@@ -23,7 +23,7 @@
     }
   ],
   "action": {
-    "default_title": "Shut Down 577",
+    "default_title": "Neleceni",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
