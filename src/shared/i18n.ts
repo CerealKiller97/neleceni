@@ -44,6 +44,8 @@ const en = {
   optTitle: 'Neleceni settings',
   optIntro:
     "Reads the speaker's name caption on the video and mutes the stream while a listed speaker holds the floor. Works on live streams and on replays.",
+  optPrivacy:
+    'Privacy: the extension reads only the caption area of the video, on your computer, to recognise the name. Nothing is stored or sent anywhere.',
   optLanguage: 'Језик / Language',
   optLangAuto: 'Automatic (Chrome’s language)',
   optEnabled: 'Enabled',
@@ -114,6 +116,8 @@ const sr: Record<MessageKey, string> = {
   optTitle: 'Neleceni — подешавања',
   optIntro:
     'Чита натпис са именом говорника на видеу и утишава пренос док говори особа са списка. Ради на преносима уживо и на снимцима.',
+  optPrivacy:
+    'Приватност: проширење чита само део слике са натписом, на вашем рачунару, да би препознало име. Ништа се не чува нити шаље.',
   optLanguage: 'Језик / Language',
   optLangAuto: 'Аутоматски (језик Chrome-а)',
   optEnabled: 'Укључено',

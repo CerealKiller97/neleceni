@@ -2,8 +2,9 @@
   "manifest_version": 3,
   "name": "Neleceni",
   "short_name": "Neleceni",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "__MSG_extDescription__",
+  "homepage_url": "https://github.com/Tpojka/neleceni",
   "default_locale": "en",
   "minimum_chrome_version": "116",
   "icons": {
@@ -12,14 +13,21 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "permissions": ["storage", "offscreen"],
+  "permissions": [
+    "storage",
+    "offscreen"
+  ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -37,7 +45,9 @@
   },
   "commands": {
     "toggle-mute": {
-      "suggested_key": { "default": "Alt+Shift+M" },
+      "suggested_key": {
+        "default": "Alt+Shift+M"
+      },
       "description": "__MSG_cmdToggle__"
     }
   },

@@ -1,6 +1,6 @@
 {
   "name": "neleceni",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Chrome extension that mutes a YouTube stream while a chosen speaker holds the floor, by reading the on-screen name caption.",
   "type": "module",
@@ -26,5 +26,6 @@
     "@tesseract.js-data/srp": "^1.0.0",
     "@tesseract.js-data/srp_latn": "^1.0.0",
     "tesseract.js": "^7.0.0"
-  }
+  },
+  "homepage": "https://github.com/Tpojka/neleceni"
 }

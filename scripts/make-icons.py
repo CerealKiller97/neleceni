@@ -1,4 +1,4 @@
-"""Draws the toolbar icons (a muted speaker on a red tile). Needs Pillow: pip install pillow.
+"""Draws the extension icons (a muted speaker on a red tile). Needs Pillow: pip install pillow.
 Run from the repo root: python3 scripts/make-icons.py"""
 from PIL import Image, ImageDraw
 
@@ -20,6 +20,12 @@ d.line([(844, 400), (620, 624)], fill=WHITE, width=w)
 for x, y in [(620, 400), (844, 624), (844, 400), (620, 624)]:
     d.ellipse([x - w / 2, y - w / 2, x + w / 2, y + w / 2], fill=WHITE)
 
-for size in (16, 32, 48, 128):
+# Toolbar sizes use the full square so they stay legible.
+for size in (16, 32, 48):
     img.resize((size, size), Image.LANCZOS).save(f'static/icons/icon{size}.png', optimize=True)
+
+# 128 px is also the Chrome Web Store icon: artwork 96x96 with 16 px transparent padding.
+store = Image.new('RGBA', (128, 128), (0, 0, 0, 0))
+store.paste(img.resize((96, 96), Image.LANCZOS), (16, 16))
+store.save('static/icons/icon128.png', optimize=True)
 print('Wrote static/icons/icon{16,32,48,128}.png')

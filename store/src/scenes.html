@@ -1,0 +1,201 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Neleceni store images</title>
+    <!--
+      Source for the Chrome Web Store images. Render with store/render.mjs, or open with
+      ?action.sr (scenes: action, lines, popup, promo-small, promo-marquee; languages: sr, en).
+      The video is an illustration in the broadcast's caption style, not real footage.
+    -->
+    <link rel="stylesheet" href="../../static/ui.css" />
+    <style>
+      :root { color-scheme: light; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; overflow: hidden; }
+      body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #141414; color: #fff; }
+      .scene { position: relative; width: 100vw; height: 100vh; display: none; }
+      .scene.on { display: block; }
+
+      /* headline band */
+      .head { position: absolute; left: 80px; right: 80px; top: 34px; display: flex; align-items: center; gap: 18px; }
+      .head img { width: 56px; height: 56px; }
+      .head h1 { font-size: 34px; line-height: 1.15; margin: 0; font-weight: 700; letter-spacing: -0.2px; }
+      .head p { margin: 4px 0 0; color: #c9c4bf; font-size: 19px; }
+
+      /* illustrated video frame */
+      .video { position: absolute; overflow: hidden; border-radius: 14px; background:
+          radial-gradient(ellipse 30% 22% at 22% 38%, rgba(240,220,200,.18), transparent 70%),
+          radial-gradient(ellipse 18% 26% at 58% 40%, rgba(30,30,40,.55), transparent 70%),
+          radial-gradient(ellipse 22% 20% at 80% 46%, rgba(240,220,200,.14), transparent 70%),
+          linear-gradient(180deg, #5b3a24 0%, #4a2e1c 34%, #3a2416 55%, #6e2222 78%, #571a1a 100%);
+        box-shadow: 0 18px 50px rgba(0,0,0,.45); }
+      .video::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: linear-gradient(90deg, #f00 0 38%, rgba(255,255,255,.35) 38%); }
+      .logo { position: absolute; left: 3%; top: 4%; width: 13%; aspect-ratio: 2.1; border-radius: 50%;
+        background: radial-gradient(ellipse at 50% 45%, #2b4a8f, #16295a 70%); border: 3px solid #c9a24a; opacity: .9; }
+      .caption { position: absolute; left: 3%; bottom: 4.5%; font: 700 1em Arial, Helvetica, sans-serif; color: #fff;
+        -webkit-text-stroke: .045em #000; paint-order: stroke fill; text-shadow: 0 0 .12em rgba(0,0,0,.8); line-height: 1.22; }
+      .caption .name { font-size: 1.12em; }
+      .caption .group { font-size: .98em; }
+
+      /* status pill: same look as the extension's overlay */
+      .pill { position: absolute; top: 4%; right: 2.4%; display: flex; align-items: center; gap: .45em; padding: .38em .8em;
+        border-radius: 999px; color: #fff; font: 500 1em system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: rgba(20,20,20,.78); border: 1px solid rgba(255,255,255,.2); }
+      .pill.muted { background: rgba(176,32,32,.92); }
+      .pill .dot { width: .62em; height: .62em; border-radius: 50%; background: #46c46a; }
+      .pill.muted .dot { background: #fff; }
+
+      /* scene: action */
+      #action .video { left: 80px; right: 80px; top: 136px; height: 630px; font-size: 30px; }
+      #action .pill { font-size: 22px; }
+
+      /* scene: lines */
+      #lines .video { top: 170px; width: 540px; height: 304px; font-size: 16px; }
+      #lines .video.a { left: 80px; }
+      #lines .video.b { right: 80px; }
+      #lines .pill { font-size: 15px; }
+      #lines .hl { display: inline-block; outline: 3px solid #ffd479; outline-offset: 1px; border-radius: 4px; line-height: 1.05; }
+      #lines .note { position: absolute; top: 500px; width: 540px; color: #e8e3de; font-size: 21px; line-height: 1.4; }
+      #lines .note.a { left: 80px; }
+      #lines .note.b { right: 80px; }
+      #lines .note b { color: #fff; }
+      #lines .foot { position: absolute; left: 80px; right: 80px; bottom: 50px; color: #a9a39d; font-size: 18px; }
+
+      /* scene: popup */
+      #popup .copy { position: absolute; left: 80px; top: 200px; width: 560px; }
+      #popup .copy li { font-size: 22px; line-height: 1.45; color: #e8e3de; margin-bottom: 16px; }
+      #popup .copy b { color: #fff; }
+      #popup kbd { font: 600 18px ui-monospace, Menlo, monospace; background: #2a2a2a; border: 1px solid #555; border-radius: 6px; padding: 2px 8px; color: #fff; }
+      #popup .toolbar { position: absolute; right: 120px; top: 150px; width: 440px; height: 56px; border-radius: 12px 12px 0 0;
+        background: #dfe3ea; display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; gap: 14px; }
+      #popup .toolbar .addr { flex: 1; height: 32px; border-radius: 16px; background: #fff; }
+      #popup .tb-icon { position: relative; width: 28px; height: 28px; }
+      #popup .tb-icon img { width: 28px; height: 28px; }
+      #popup .badge { position: absolute; right: -14px; bottom: -6px; background: #b02020; color: #fff; font: 700 11px system-ui, sans-serif;
+        padding: 1px 4px; border-radius: 4px; }
+      #popup .pop { position: absolute; right: 120px; top: 206px; width: 440px; border-radius: 0 0 14px 14px; overflow: hidden;
+        box-shadow: 0 18px 50px rgba(0,0,0,.5); }
+      #popup .pop .inner { width: 320px; transform: scale(1.375); transform-origin: 0 0; background: var(--bg); color: var(--text);
+        padding: 14px 16px 16px; font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      #popup .pop .frame { height: calc(232px * 1.375); background: var(--bg); }
+      #popup header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+      #popup header img { width: 24px; height: 24px; }
+      #popup header strong { font-size: 15px; flex: 1; }
+      #popup .state { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 10px 12px; margin: 12px 0; }
+      #popup .state .big { font-weight: 700; font-size: 15px; color: var(--accent); }
+      #popup .buttons { display: flex; gap: 8px; }
+      #popup .buttons button { flex: 1; }
+
+      /* promo tiles */
+      .promo { background: radial-gradient(circle at 26% 50%, #c42a2a 0, #8f1717 46%, #4a0b0b 100%); }
+      .promo .mark { position: absolute; display: flex; align-items: center; }
+      .promo .mark img { filter: drop-shadow(0 10px 24px rgba(0,0,0,.45)); }
+      .promo .mark span { font-weight: 800; letter-spacing: -0.5px; text-shadow: 0 4px 18px rgba(0,0,0,.35); }
+      #promo-small .mark { left: 34px; top: 50%; transform: translateY(-50%); gap: 18px; }
+      #promo-small .mark img { width: 120px; height: 120px; }
+      #promo-small .mark span { font-size: 52px; }
+      #promo-marquee .mark { left: 90px; top: 50%; transform: translateY(-50%); gap: 26px; }
+      #promo-marquee .mark img { width: 200px; height: 200px; }
+      #promo-marquee .mark span { font-size: 92px; }
+      #promo-marquee .video { right: 80px; top: 145px; width: 480px; height: 270px; font-size: 14px; }
+      #promo-marquee .pill { font-size: 16px; }
+    </style>
+  </head>
+  <body>
+    <!-- 1280x800: the extension at work -->
+    <section class="scene" id="action">
+      <div class="head"><img src="../../static/icons/icon128.png" alt="" />
+        <div><h1 data-t="actionTitle"></h1><p data-t="actionSub"></p></div></div>
+      <div class="video"><div class="logo"></div>
+        <div class="pill muted"><span class="dot"></span><span data-t="mutedName"></span></div>
+        <div class="caption"><div class="name">Александар Вучић</div><div class="group">Александар Вучић - Србија побеђује</div></div>
+      </div>
+    </section>
+
+    <!-- 1280x800: only the name line counts -->
+    <section class="scene" id="lines">
+      <div class="head"><img src="../../static/icons/icon128.png" alt="" />
+        <div><h1 data-t="linesTitle"></h1><p data-t="linesSub"></p></div></div>
+      <div class="video a"><div class="logo"></div>
+        <div class="pill"><span class="dot"></span><span data-t="listeningOther"></span></div>
+        <div class="caption"><div class="name"><span class="hl" data-t="otherName"></span></div><div class="group">Александар Вучић - Србија побеђује</div></div></div>
+      <div class="video b"><div class="logo"></div>
+        <div class="pill muted"><span class="dot"></span><span data-t="mutedName"></span></div>
+        <div class="caption"><div class="name"><span class="hl">Александар Вучић</span></div><div class="group">Александар Вучић - Србија побеђује</div></div></div>
+      <p class="note a" data-t-html="noteA"></p>
+      <p class="note b" data-t-html="noteB"></p>
+      <p class="foot" data-t="linesFoot"></p>
+    </section>
+
+    <!-- 1280x800: popup, badge and shortcut -->
+    <section class="scene" id="popup">
+      <div class="head"><img src="../../static/icons/icon128.png" alt="" />
+        <div><h1 data-t="popupTitle"></h1><p data-t="popupSub"></p></div></div>
+      <ul class="copy" data-t-html="popupList"></ul>
+      <div class="toolbar"><div class="addr"></div><div class="tb-icon"><img src="../../static/icons/icon32.png" alt="" /><span class="badge" data-t="badge"></span></div></div>
+      <div class="pop"><div class="frame"><div class="inner">
+        <header><img src="../../static/icons/icon32.png" alt="" /><strong>Neleceni</strong></header>
+        <label class="check"><input type="checkbox" checked /> <span data-t="enabled"></span></label>
+        <div class="state"><div class="big" data-t="muted"></div><div class="hint" data-t="captionLine"></div></div>
+        <div class="buttons"><button class="primary" data-t="toggle"></button><button data-t="settings"></button></div>
+      </div></div></div>
+    </section>
+
+    <!-- 440x280 and 1400x560: promo tiles (not localised by the store, so no text but the name) -->
+    <section class="scene promo" id="promo-small">
+      <div class="mark"><img src="../../static/icons/icon128.png" alt="" /><span>Neleceni</span></div>
+    </section>
+    <section class="scene promo" id="promo-marquee">
+      <div class="mark"><img src="../../static/icons/icon128.png" alt="" /><span>Neleceni</span></div>
+      <div class="video"><div class="logo"></div>
+        <div class="pill muted"><span class="dot"></span><span>· · ·</span></div>
+        <div class="caption"><div class="name">▬▬▬▬▬▬ ▬▬▬▬▬</div><div class="group">▬▬▬▬▬▬ ▬▬▬▬▬ - ▬▬▬▬▬ ▬▬▬▬▬▬</div></div></div>
+    </section>
+
+    <script>
+      const T = {
+        sr: {
+          actionTitle: 'Утишава пренос док говори особа коју изаберете',
+          actionSub: 'Препознаје натпис са именом говорника на слици: YouTube канал Народне скупштине, уживо и снимци.',
+          mutedName: 'Утишано · Александар Вучић',
+          listeningOther: 'Чује се · Јована Петровић',
+          otherName: 'Јована Петровић',
+          linesTitle: 'Чита само ред са именом говорника',
+          linesSub: 'Ред са посланичком групом се занемарује, ма чије име носио.',
+          noteA: '<b>Говори неко други.</b> Вучићево име је само у називу групе, па се звук чује.',
+          noteB: '<b>Говори особа са списка.</b> Звук се утишава у року од секунде, а враћа се кад се појави натпис следећег говорника.',
+          linesFoot: 'Ћирилица и латиница се рачунају као исто. Списак особа мењате у подешавањима. (Илустрација; име „Јована Петровић“ је измишљено.)',
+          popupTitle: 'Увек под вашом контролом',
+          popupSub: 'Ручно утишавање, стање на иконици и брзо искључивање.',
+          popupList: '<li><b>Клик на ознаку</b> на видеу или <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> ручно утишава или враћа звук.</li><li><b>Иконица</b> показује <b>УКЉ</b> док проширење прати видео и <b>ТИХО</b> док је звук утишан.</li><li><b>Прозорчић</b>: укључивање, тренутно стање и подешавања.</li><li><b>Све остаје на вашем рачунару</b>: ништа се не чува и не шаље.</li>',
+          badge: 'ТИХО', enabled: 'Укључено', muted: 'Утишано', captionLine: 'Натпис: Александар Вучић',
+          toggle: 'Утишај / врати звук', settings: 'Подешавања',
+        },
+        en: {
+          actionTitle: 'Mutes the stream while a speaker you choose has the floor',
+          actionSub: "Reads the speaker's name caption on the picture: the National Assembly of Serbia's YouTube channel, live and replays.",
+          mutedName: 'Muted · Александар Вучић',
+          listeningOther: 'Listening · Јована Петровић',
+          otherName: 'Јована Петровић',
+          linesTitle: "Reads only the speaker's name line",
+          linesSub: 'The parliamentary group line below it is ignored, whoever it is named after.',
+          noteA: "<b>Someone else is speaking.</b> Vučić's name is only in the group's name, so the sound stays on.",
+          noteB: "<b>A listed speaker has the floor.</b> The sound is muted within a second and comes back when the next speaker's caption appears.",
+          linesFoot: 'Cyrillic and Latin spellings count as the same. You choose the names in the settings. (Illustration; the name “Јована Петровић” is made up.)',
+          popupTitle: 'Always in your hands',
+          popupSub: 'Manual mute, state on the toolbar icon and a quick off switch.',
+          popupList: '<li><b>Click the label</b> on the video or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> to mute or un-mute by hand.</li><li><b>The toolbar icon</b> shows <b>ON</b> while a video is watched and <b>MUTE</b> while it is muted.</li><li><b>The popup</b>: on/off switch, current state and settings.</li><li><b>Everything stays on your computer</b>: nothing is stored or sent.</li>',
+          badge: 'MUTE', enabled: 'Enabled', muted: 'Muted', captionLine: 'Caption: Александар Вучић',
+          toggle: 'Mute / un-mute', settings: 'Settings',
+        },
+      };
+      // ?scene.lang, e.g. ?action.en (one parameter, so the URL survives being passed around whole)
+      const [sceneName, langName] = location.search.slice(1).split('.');
+      const lang = langName === 'en' ? 'en' : 'sr';
+      for (const el of document.querySelectorAll('[data-t]')) el.textContent = T[lang][el.dataset.t];
+      for (const el of document.querySelectorAll('[data-t-html]')) el.innerHTML = T[lang][el.dataset.tHtml];
+      document.getElementById(sceneName || 'action').classList.add('on');
+    </script>
+  </body>
+</html>
