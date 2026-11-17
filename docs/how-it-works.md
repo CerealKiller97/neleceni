@@ -68,7 +68,9 @@ The default region (left 0 %, top 80 %, width 90 %, height 20 %) covers both.
 
 ## Tested on
 
-The replay of the 17 Nov 2026 session (`https://www.youtube.com/watch?v=qkmMyGsHo9o`), live in Chrome and Brave:
+The replay of the 17 Nov 2026 session (`https://www.youtube.com/watch?v=qkmMyGsHo9o`), live in Chrome and Brave.
+The channel made that replay private on the evening of 17 Nov 2026 and started re-publishing the session in parts
+("… 17.11.2026. (I)"), so the times below refer to the original 7 h 54 min recording.
 
 | Replay time | Caption (line 1 / line 2) | Result |
 |---|---|---|
@@ -82,6 +84,9 @@ An offline check of 29 real frames from this replay (17 at 1080p, 12 at 720p) re
 are frames where the first name is unreadable, which count as "nothing read" and change nothing.
 
 OCR takes 20–220 ms per frame in the offscreen document (more at 1080p).
+
+Press conferences on the same channel (e.g. `watch?v=Mbh3HdskteQ`, 17 Nov 2026) show no speaker caption at all,
+so nothing is muted there; that is expected.
 
 ## Development
 
@@ -105,6 +110,9 @@ npm run zip         # build and pack dist/ into neleceni.zip
 ```
 
 After a rebuild, click the reload icon on the extension's card in `chrome://extensions` and reload YouTube tabs.
+
+The interface is in English and Serbian Cyrillic (`src/shared/i18n.ts`, chosen in the settings; `_locales/` only
+covers the name, description and shortcut text that Chrome itself shows).
 
 ```
 src/

@@ -5,6 +5,7 @@
  */
 import { classify, type Observation } from '../shared/match.ts';
 import type { OcrRequest, OcrResponse, StatusMessage, TabStatus, ToContent } from '../shared/messages.ts';
+import { resolveLang, t, type Lang } from '../shared/i18n.ts';
 import { initialState, isMuted, step, toggle, type MuteState } from '../shared/state.ts';
 import { DEFAULT_SETTINGS, loadSettings, onSettingsChanged, type Settings } from '../shared/settings.ts';
 import { AudioGate } from './audio.ts';
@@ -46,6 +47,8 @@ let lastObs: Observation = { kind: 'none' };
 let lastCapture: Capture | null = null;
 let lastOcrText = '';
 let lastBadge = '';
+
+const lang = (): Lang => resolveLang(settings.language);
 
 const mainVideo = (): HTMLVideoElement | null =>
   document.querySelector<HTMLVideoElement>('#movie_player video.html5-main-video') ??
@@ -134,7 +137,7 @@ async function tick(): Promise<void> {
   const now = Date.now();
   if (cap.ink < MIN_INK) {
     obs = { kind: 'none' };
-    lastOcrText = '(no caption)';
+    lastOcrText = t(lang(), 'debugNoCaption');
   } else if (
     canReuse(lastObs) &&
     lastSig &&
@@ -176,8 +179,10 @@ function render(player: HTMLElement): void {
     overlay.hide();
     return;
   }
-  const note = error ? `OCR error: ${error}` : gate.needsGesture ? 'Click the page once to let audio play' : '';
+  const l = lang();
+  const note = error ? t(l, 'noteOcrError', { error }) : gate.needsGesture ? t(l, 'noteNeedsClick') : '';
   overlay.show(player, {
+    lang: l,
     muted,
     manual: state.override !== null,
     line: state.lastLine,
@@ -199,10 +204,11 @@ function stopActing(): void {
 }
 
 function report(active: boolean, muted: boolean): void {
-  const key = `${active}:${muted}`;
+  const badge = active ? t(lang(), muted ? 'badgeMuted' : 'badgeOn') : '';
+  const key = `${active}:${muted}:${badge}`;
   if (key === lastBadge || dead) return;
   lastBadge = key;
-  const msg: StatusMessage = { type: 'status', active, muted };
+  const msg: StatusMessage = { type: 'status', active, muted, badge };
   chrome.runtime.sendMessage(msg).catch(() => {});
 }
 

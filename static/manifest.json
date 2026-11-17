@@ -3,7 +3,8 @@
   "name": "Neleceni",
   "short_name": "Neleceni",
   "version": "0.1.0",
-  "description": "Mutes a YouTube stream while a chosen speaker holds the floor, by reading the speaker's name caption on screen.",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
   "minimum_chrome_version": "116",
   "icons": {
     "16": "icons/icon16.png",
@@ -37,7 +38,7 @@
   "commands": {
     "toggle-mute": {
       "suggested_key": { "default": "Alt+Shift+M" },
-      "description": "Mute or un-mute the stream by hand"
+      "description": "__MSG_cmdToggle__"
     }
   },
   "content_security_policy": {

@@ -1,3 +1,5 @@
+import { LANG_SETTINGS, type LangSetting } from './i18n.ts';
+
 /** Caption region, in percent of the video frame (0–100). */
 export interface Region {
   x: number;
@@ -31,6 +33,8 @@ export interface Settings {
   showBadge: boolean;
   /** Show the processed caption crop and OCR text under the pill. */
   debug: boolean;
+  /** Interface language: follow Chrome, or Serbian Cyrillic / English. */
+  language: LangSetting;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -50,6 +54,7 @@ export const DEFAULT_SETTINGS: Settings = {
   langs: 'srp',
   showBadge: true,
   debug: false,
+  language: 'auto',
 };
 
 export const LANG_CHOICES = ['srp', 'srp+srp_latn', 'srp_latn'] as const;
@@ -94,6 +99,7 @@ export function sanitize(raw: unknown): Settings {
     langs: (LANG_CHOICES as readonly string[]).includes(r.langs as string) ? (r.langs as string) : d.langs,
     showBadge: typeof r.showBadge === 'boolean' ? r.showBadge : d.showBadge,
     debug: typeof r.debug === 'boolean' ? r.debug : d.debug,
+    language: (LANG_SETTINGS as readonly unknown[]).includes(r.language) ? (r.language as LangSetting) : d.language,
   };
 }
 

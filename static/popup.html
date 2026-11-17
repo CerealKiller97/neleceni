@@ -5,7 +5,7 @@
     <title>Neleceni</title>
     <link rel="stylesheet" href="ui.css" />
     <style>
-      body { width: 300px; padding: 14px 16px 16px; }
+      body { width: 320px; padding: 14px 16px 16px; }
       header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
       header img { width: 24px; height: 24px; }
       header strong { font-size: 15px; flex: 1; }
@@ -22,14 +22,14 @@
       <img src="icons/icon32.png" alt="" />
       <strong>Neleceni</strong>
     </header>
-    <label class="check"><input type="checkbox" id="enabled" /> Enabled</label>
+    <label class="check"><input type="checkbox" id="enabled" /> <span data-i18n="popupEnabled"></span></label>
     <div class="state" id="state">
       <div class="big" id="headline">…</div>
       <div class="hint" id="detail"></div>
     </div>
     <div class="buttons">
-      <button type="button" id="toggle" class="primary">Mute / un-mute</button>
-      <button type="button" id="settings">Settings</button>
+      <button type="button" id="toggle" class="primary" data-i18n="popupToggle"></button>
+      <button type="button" id="settings" data-i18n="popupSettings"></button>
     </div>
     <script src="popup.js"></script>
   </body>

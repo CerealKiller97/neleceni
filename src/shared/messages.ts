@@ -21,6 +21,8 @@ export interface StatusMessage {
   type: 'status';
   active: boolean;
   muted: boolean;
+  /** Badge text, already in the interface language ('' when not active). */
+  badge: string;
 }
 
 /** Service worker / popup → content script. */

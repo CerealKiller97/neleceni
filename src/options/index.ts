@@ -1,3 +1,5 @@
+import { resolveLang, t, type Lang, type LangSetting } from '../shared/i18n.ts';
+import { applyTranslations } from '../shared/i18n-dom.ts';
 import { DEFAULT_SETTINGS, loadSettings, sanitize, saveSettings, type Settings } from '../shared/settings.ts';
 
 const form = document.getElementById('form') as HTMLFormElement;
@@ -8,7 +10,15 @@ const checkbox = (name: string) => form.elements.namedItem(name) as HTMLInputEle
 const lines = (s: string) => s.split('\n').map((l) => l.trim()).filter(Boolean);
 const num = (name: string) => Number(input(name).value);
 
+let lang: Lang = resolveLang(DEFAULT_SETTINGS.language);
+
+function translate(setting: LangSetting): void {
+  lang = resolveLang(setting);
+  applyTranslations(document, lang);
+}
+
 function fill(s: Settings): void {
+  input('language').value = s.language;
   checkbox('enabled').checked = s.enabled;
   checkbox('showBadge').checked = s.showBadge;
   checkbox('debug').checked = s.debug;
@@ -24,10 +34,12 @@ function fill(s: Settings): void {
   input('otherConfirmations').value = String(s.otherConfirmations);
   input('minConfidence').value = String(s.minConfidence);
   input('releaseAfterGoneSec').value = String(s.releaseAfterGoneSec);
+  translate(s.language);
 }
 
 function read(): Settings {
   return sanitize({
+    language: input('language').value as LangSetting,
     enabled: checkbox('enabled').checked,
     showBadge: checkbox('showBadge').checked,
     debug: checkbox('debug').checked,
@@ -55,18 +67,24 @@ form.addEventListener('submit', async (e) => {
   const s = read();
   await saveSettings(s);
   fill(s); // show the clamped values
-  flash('Saved');
+  flash(t(lang, 'optSaved'));
 });
+
+// Show the page in the chosen language right away; it is stored with Save like everything else.
+input('language').addEventListener('change', () => translate(input('language').value as LangSetting));
 
 document.getElementById('reset')!.addEventListener('click', async () => {
   await saveSettings(DEFAULT_SETTINGS);
   fill(DEFAULT_SETTINGS);
-  flash('Defaults restored');
+  flash(t(lang, 'optDefaultsRestored'));
 });
 
-document.getElementById('shortcuts')!.addEventListener('click', (e) => {
+// The link is re-created whenever the page is translated, so listen on the document.
+document.addEventListener('click', (e) => {
+  if (!(e.target instanceof Element) || !e.target.closest('[data-action="shortcuts"]')) return;
   e.preventDefault();
   void chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
 });
 
+translate(DEFAULT_SETTINGS.language);
 loadSettings().then(fill, () => fill(DEFAULT_SETTINGS));

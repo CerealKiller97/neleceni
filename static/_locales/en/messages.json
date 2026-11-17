@@ -1,0 +1,8 @@
+{
+  "extDescription": {
+    "message": "Mutes a YouTube stream while a chosen speaker holds the floor, by reading the speaker's name caption on screen."
+  },
+  "cmdToggle": {
+    "message": "Mute or un-mute the stream by hand"
+  }
+}

@@ -1,6 +1,8 @@
 /** The small status pill drawn over the player. Built with DOM calls only (YouTube enforces Trusted Types). */
+import { t, type Lang } from '../shared/i18n.ts';
 
 export interface OverlayView {
+  lang: Lang;
   muted: boolean;
   manual: boolean;
   /** Last name line read. */
@@ -56,7 +58,6 @@ export class Overlay {
 
     this.pill = document.createElement('div');
     this.pill.className = 'pill';
-    this.pill.title = 'Neleceni: click (or Alt+Shift+M) to mute or un-mute by hand';
     const dot = document.createElement('span');
     dot.className = 'dot';
     this.label = document.createElement('span');
@@ -86,9 +87,10 @@ export class Overlay {
     this.host.hidden = false;
 
     this.pill.classList.toggle('muted', view.muted);
-    const state = view.muted ? 'Muted' : 'Listening';
+    this.pill.title = t(view.lang, 'pillTitle');
+    const state = t(view.lang, view.muted ? 'muted' : 'listening');
     const who = view.line ? ` · ${view.line}` : '';
-    this.label.textContent = `${state}${view.manual ? ' (manual)' : ''}${who}`;
+    this.label.textContent = `${state}${view.manual ? ` ${t(view.lang, 'manual')}` : ''}${who}`;
 
     this.note.textContent = view.note;
     this.note.hidden = !view.note;

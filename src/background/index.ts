@@ -33,9 +33,8 @@ async function runOcr(image: string, langs: string): Promise<OcrResponse> {
   return res ?? { ok: false, error: 'OCR document did not answer' };
 }
 
-function setBadge(tabId: number, active: boolean, muted: boolean): void {
-  const text = !active ? '' : muted ? 'MUTE' : 'ON';
-  void chrome.action.setBadgeText({ tabId, text });
+function setBadge(tabId: number, active: boolean, muted: boolean, text: string): void {
+  void chrome.action.setBadgeText({ tabId, text: active ? text : '' });
   if (active) void chrome.action.setBadgeBackgroundColor({ tabId, color: muted ? '#b02020' : '#2f7d4a' });
 }
 
@@ -48,7 +47,7 @@ chrome.runtime.onMessage.addListener((msg: ToBackground | OffscreenOcrRequest, s
       );
       return true; // async response
     case 'status':
-      if (sender.tab?.id !== undefined) setBadge(sender.tab.id, msg.active, msg.muted);
+      if (sender.tab?.id !== undefined) setBadge(sender.tab.id, msg.active, msg.muted, msg.badge);
       return false;
   }
   return false;

@@ -1,5 +1,7 @@
+import { resolveLang, t, type Lang } from '../shared/i18n.ts';
+import { applyTranslations } from '../shared/i18n-dom.ts';
 import type { GetStatusMessage, TabStatus, ToggleMessage } from '../shared/messages.ts';
-import { loadSettings, saveSettings } from '../shared/settings.ts';
+import { DEFAULT_SETTINGS, loadSettings, saveSettings } from '../shared/settings.ts';
 
 const enabled = document.getElementById('enabled') as HTMLInputElement;
 const stateBox = document.getElementById('state') as HTMLDivElement;
@@ -7,32 +9,40 @@ const headline = document.getElementById('headline') as HTMLDivElement;
 const detail = document.getElementById('detail') as HTMLDivElement;
 const toggleBtn = document.getElementById('toggle') as HTMLButtonElement;
 
+let lang: Lang = resolveLang(DEFAULT_SETTINGS.language);
+let last: TabStatus | null = null;
+
 async function activeTabId(): Promise<number | undefined> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return tab?.id;
 }
 
 function show(s: TabStatus | null): void {
+  last = s;
   stateBox.className = 'state';
   toggleBtn.disabled = !s?.active;
   if (!s) {
-    headline.textContent = 'Not on YouTube';
-    detail.textContent = 'Open a video from a watched channel.';
+    headline.textContent = t(lang, 'popupNotYoutube');
+    detail.textContent = t(lang, 'popupNotYoutubeDetail');
     return;
   }
   if (!s.enabled) {
-    headline.textContent = 'Off';
-    detail.textContent = 'Turn on “Enabled” to start.';
+    headline.textContent = t(lang, 'popupOff');
+    detail.textContent = t(lang, 'popupOffDetail');
     return;
   }
   if (!s.active) {
-    headline.textContent = 'Idle';
-    detail.textContent = 'This tab is not playing a video from a watched channel.';
+    headline.textContent = t(lang, 'popupIdle');
+    detail.textContent = t(lang, 'popupIdleDetail');
     return;
   }
   stateBox.classList.add(s.muted ? 'muted' : 'listening');
-  headline.textContent = `${s.muted ? 'Muted' : 'Listening'}${s.manual ? ' (manual)' : ''}`;
-  detail.textContent = s.error ? `OCR error: ${s.error}` : s.line ? `Caption: ${s.line}` : 'No name caption read yet.';
+  headline.textContent = `${t(lang, s.muted ? 'muted' : 'listening')}${s.manual ? ` ${t(lang, 'manual')}` : ''}`;
+  detail.textContent = s.error
+    ? t(lang, 'noteOcrError', { error: s.error })
+    : s.line
+      ? t(lang, 'popupCaption', { line: s.line })
+      : t(lang, 'popupNoCaption');
 }
 
 async function send(msg: GetStatusMessage | ToggleMessage): Promise<void> {
@@ -54,6 +64,12 @@ enabled.addEventListener('change', async () => {
 toggleBtn.addEventListener('click', () => void send({ type: 'toggle' }));
 document.getElementById('settings')!.addEventListener('click', () => void chrome.runtime.openOptionsPage());
 
-void loadSettings().then((s) => (enabled.checked = s.enabled));
+applyTranslations(document, lang);
+void loadSettings().then((s) => {
+  enabled.checked = s.enabled;
+  lang = resolveLang(s.language);
+  applyTranslations(document, lang);
+  show(last);
+});
 void send({ type: 'get-status' });
 setInterval(() => void send({ type: 'get-status' }), 1000);
