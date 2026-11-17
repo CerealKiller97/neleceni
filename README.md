@@ -29,22 +29,32 @@ Neleceni је проширење за Google Chrome које само утиша
 
 ### Инсталација
 
-Проширење још није у продавници Chrome Web Store, па се инсталира ручно, у режиму за програмере. Потребни су [Node.js](https://nodejs.org/) 23.6 или новији и, по жељи, [Git](https://git-scm.com/).
+Проширење још није у продавници Chrome Web Store, па се инсталира ручно, у режиму за програмере.
 
-1. Преузмите изворни код (`git clone https://github.com/Tpojka/neleceni.git`, или на GitHub-у **Code → Download ZIP** па распакујте) и изградите проширење:
-   ```sh
-   cd neleceni
-   npm install
-   npm run build
-   ```
-   Готово проширење се налази у фасцикли `dist/`.
-2. У Chrome-у отворите `chrome://extensions`.
-3. Горе десно укључите **Developer mode** (режим за програмере).
-4. Кликните **Load unpacked** и изаберите фасциклу `dist/`. Отвориће се страница са подешавањима; горе десно изаберите језик (**Језик / Language**), а ако вам остала подразумевана подешавања одговарају, само је затворите.
-5. Закачите иконицу проширења на траку са алаткама: кликните иконицу слагалице 🧩 десно од адресе, па чиоду поред **Neleceni**.
-6. Отворите пренос или снимак са канала @ParlamentSrbija.
+#### Најлакше: готов ZIP
 
-**Ажурирање:** у фасцикли пројекта покрените `git pull`, `npm install` и `npm run build`. Затим у `chrome://extensions` кликните стрелицу за поновно учитавање (↻) на картици **Neleceni** и поново учитајте отворене YouTube картице.
+1. На страници [Releases](https://github.com/Tpojka/neleceni/releases/latest) преузмите датотеку `neleceni-<верзија>.zip` (одељак **Assets**).
+2. Распакујте је у фасциклу коју нећете брисати ни премештати, нпр. `Documents/neleceni`. Chrome проширење учитава управо из те фасцикле.
+3. У Chrome-у отворите `chrome://extensions`.
+4. Горе десно укључите **Developer mode** (режим за програмере).
+5. Кликните **Load unpacked** и изаберите распаковану фасциклу (ону у којој је датотека `manifest.json`). Отвориће се страница са подешавањима; горе десно изаберите језик (**Језик / Language**), а ако вам остала подразумевана подешавања одговарају, само је затворите.
+6. Закачите иконицу проширења на траку са алаткама: кликните иконицу слагалице 🧩 десно од адресе, па чиоду поред **Neleceni**.
+7. Отворите пренос или снимак са канала @ParlamentSrbija.
+
+**Ажурирање:** преузмите нови ZIP и распакујте га преко старе фасцикле (замените постојеће датотеке). Затим у `chrome://extensions` кликните стрелицу за поновно учитавање (↻) на картици **Neleceni** и поново учитајте отворене YouTube картице. Подешавања остају сачувана.
+
+#### Из изворног кода
+
+Потребни су [Node.js](https://nodejs.org/) 23.6 или новији и, по жељи, [Git](https://git-scm.com/).
+
+```sh
+git clone https://github.com/Tpojka/neleceni.git
+cd neleceni
+npm install
+npm run build
+```
+
+Готово проширење се налази у фасцикли `dist/`; учитајте га као у корацима 3–7 изнад. **Ажурирање:** `git pull`, `npm install`, `npm run build`, па ↻ на картици **Neleceni**.
 
 > Chrome памти проширење по путањи до фасцикле. Ако фасциклу преместите или преименујете, уклоните проширење и поново га учитајте преко **Load unpacked**. Подешавања се тада враћају на подразумевана.
 
@@ -158,22 +168,32 @@ It was built for the official YouTube channel of the National Assembly of Serbia
 
 ### Installation
 
-The extension is not in the Chrome Web Store yet, so you install it by hand, in developer mode. You need [Node.js](https://nodejs.org/) 23.6 or newer and, optionally, [Git](https://git-scm.com/).
+The extension is not in the Chrome Web Store yet, so you install it by hand, in developer mode.
 
-1. Get the source (`git clone https://github.com/Tpojka/neleceni.git`, or on GitHub **Code → Download ZIP** and unzip it) and build the extension:
-   ```sh
-   cd neleceni
-   npm install
-   npm run build
-   ```
-   The finished extension is in the `dist/` folder.
-2. In Chrome, open `chrome://extensions`.
-3. Turn on **Developer mode** (top right).
-4. Click **Load unpacked** and choose the `dist/` folder. The settings page opens; pick the language at the top right (**Језик / Language**), and if the other defaults suit you, just close it.
-5. Pin the extension to the toolbar: click the puzzle icon 🧩 to the right of the address bar, then the pin next to **Neleceni**.
-6. Open a live stream or a replay on @ParlamentSrbija.
+#### Easiest: the ready-made ZIP
 
-**Updating:** in the project folder run `git pull`, `npm install` and `npm run build`. Then click the reload arrow (↻) on the **Neleceni** card in `chrome://extensions` and reload any open YouTube tabs.
+1. On the [Releases](https://github.com/Tpojka/neleceni/releases/latest) page, download `neleceni-<version>.zip` (under **Assets**).
+2. Unzip it into a folder you won't delete or move, e.g. `Documents/neleceni`. Chrome loads the extension from that very folder.
+3. In Chrome, open `chrome://extensions`.
+4. Turn on **Developer mode** (top right).
+5. Click **Load unpacked** and choose the unzipped folder (the one containing `manifest.json`). The settings page opens; pick the language at the top right (**Језик / Language**), and if the other defaults suit you, just close it.
+6. Pin the extension to the toolbar: click the puzzle icon 🧩 to the right of the address bar, then the pin next to **Neleceni**.
+7. Open a live stream or a replay on @ParlamentSrbija.
+
+**Updating:** download the new ZIP and unzip it over the old folder (replace the existing files). Then click the reload arrow (↻) on the **Neleceni** card in `chrome://extensions` and reload any open YouTube tabs. Your settings are kept.
+
+#### From source
+
+You need [Node.js](https://nodejs.org/) 23.6 or newer and, optionally, [Git](https://git-scm.com/).
+
+```sh
+git clone https://github.com/Tpojka/neleceni.git
+cd neleceni
+npm install
+npm run build
+```
+
+The finished extension is in the `dist/` folder; load it as in steps 3–7 above. **Updating:** `git pull`, `npm install`, `npm run build`, then ↻ on the **Neleceni** card.
 
 > Chrome identifies the extension by its folder path. If you move or rename the folder, remove the extension and load it again with **Load unpacked**. Its settings then go back to the defaults.
 

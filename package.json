@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test \"test/**/*.test.ts\"",
     "check": "npm run typecheck && npm test && npm run build",
-    "zip": "npm run build && cd dist && zip -qr ../neleceni.zip . && cd .. && echo 'Wrote neleceni.zip'"
+    "zip": "npm run build && rm -f neleceni-*.zip && cd dist && zip -qrX ../neleceni-$npm_package_version.zip . -x '.*' && cd .. && echo \"Wrote neleceni-$npm_package_version.zip\""
   },
   "engines": {
     "node": ">=23.6"

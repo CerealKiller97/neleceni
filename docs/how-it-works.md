@@ -106,7 +106,7 @@ npm run watch       # rebuild on every save
 npm run typecheck   # tsc --noEmit
 npm test            # node --test
 npm run check       # typecheck + test + build
-npm run zip         # build and pack dist/ into neleceni.zip
+npm run zip         # build and pack dist/ into neleceni-<version>.zip (release asset)
 ```
 
 After a rebuild, click the reload icon on the extension's card in `chrome://extensions` and reload YouTube tabs.
