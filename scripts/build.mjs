@@ -15,6 +15,18 @@ async function copyStatic() {
   await cp(join(root, 'static'), dist, { recursive: true });
 }
 
+// Licence texts travel with the built extension (MIT for Neleceni, Apache-2.0 for Tesseract).
+async function copyLicenses() {
+  const dir = join(dist, 'licenses');
+  await mkdir(dir, { recursive: true });
+  await Promise.all([
+    cp(join(root, 'LICENSE'), join(dist, 'LICENSE')),
+    cp(join(root, 'THIRD_PARTY_NOTICES.md'), join(dist, 'THIRD_PARTY_NOTICES.md')),
+    cp(join(nm, 'tesseract.js', 'LICENSE.md'), join(dir, 'tesseract.js-Apache-2.0.md')),
+    cp(join(nm, 'tesseract.js-core', 'LICENSE'), join(dir, 'tesseract.js-core-Apache-2.0.txt')),
+  ]);
+}
+
 async function copyVendor() {
   const tess = join(dist, 'vendor', 'tesseract');
   const core = join(dist, 'vendor', 'tesseract-core');
@@ -22,6 +34,7 @@ async function copyVendor() {
   await Promise.all([mkdir(tess, { recursive: true }), mkdir(core, { recursive: true }), mkdir(data, { recursive: true })]);
 
   await cp(join(nm, 'tesseract.js', 'dist', 'worker.min.js'), join(tess, 'worker.min.js'));
+  await cp(join(nm, 'tesseract.js', 'dist', 'worker.min.js.LICENSE.txt'), join(tess, 'worker.min.js.LICENSE.txt'));
 
   // Only the LSTM builds are needed (we always use OEM.LSTM_ONLY); Tesseract picks the
   // plain, SIMD or relaxed-SIMD one at runtime depending on the CPU.
@@ -59,7 +72,7 @@ const options = {
 
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
-await Promise.all([copyStatic(), copyVendor()]);
+await Promise.all([copyStatic(), copyVendor(), copyLicenses()]);
 
 if (watch) {
   const ctx = await esbuild.context({

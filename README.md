@@ -1,173 +1,257 @@
+<img src="static/icons/icon128.png" width="64" height="64" alt="">
+
 # Neleceni
 
-A Chrome extension that mutes a YouTube video while a chosen speaker holds the floor.
+**[Српски](#српски) · [English](#english)**
 
-It was built for the Serbian National Assembly channel ([@ParlamentSrbija](https://www.youtube.com/@ParlamentSrbija)),
-where every speaker gets a two-line name caption near the bottom of the picture. The extension reads that caption
-and silences the video while a listed name is shown. It works on **live streams and on replays** of past sessions.
+---
 
-By default it watches @ParlamentSrbija and mutes **Александар Вучић**. Both lists can be changed in the settings.
+## Српски
 
-## How it works
+### Шта је Neleceni
+
+Neleceni је проширење за Google Chrome које само утишава звук YouTube видеа док говори особа коју сте изабрали.
+
+Проширење прати натпис са именом говорника који телевизијски пренос приказује на слици. Кад препозна име са вашег списка, утиша звук. Кад се појави натпис са именом неког другог говорника, звук се враћа.
+
+Направљено је за званични YouTube канал Народне скупштине Републике Србије, [@ParlamentSrbija](https://www.youtube.com/@ParlamentSrbija). Као пример, подразумевано утишава **Александра Вучића**, а списак особа мењате сами у подешавањима.
+
+### Где и када ради
+
+- **Прегледач:** Google Chrome на рачунару (Windows, macOS, Linux), верзија 116 или новија. Тестирано и у Brave-у; требало би да ради и у осталим прегледачима заснованим на Chromium-у (нпр. Edge).
+- **Сајт:** само `www.youtube.com`. Не ради у YouTube апликацији за телефон, на `m.youtube.com`, нити у YouTube плејеру уграђеном у друге сајтове.
+- **Канал:** подразумевано само @ParlamentSrbija. Друге канале додајете у подешавањима, али проширење ради само ако канал приказује име говорника белим словима на слици, као што то ради Скупштина.
+- **Пренос уживо и снимци:** ради на оба. На снимку можете слободно да премотавате; проширење одмах поново прочита натпис.
+- **Квалитет слике:** тестирано на 720p и 1080p. На нижем квалитету (480p и мање) слова су ситна и препознавање је мање поуздано.
+- **Натпис мора да буде на екрану.** Проширење „види" само оно што пише на слици. Ако говорник почне да говори пре него што се појави његов натпис (нпр. док се приказују општи кадрови сале), звук се утишава тек кад се натпис појави. За тај део користите пречицу **Alt+Shift+M**.
+- **Видео треба да буде видљив.** У картици која је у позадини Chrome успорава проширење, па утишавање може да касни. Најбоље је да видео буде у свом прозору или у режиму „слика у слици" (picture-in-picture).
+
+### Инсталација
+
+Проширење још није у продавници Chrome Web Store, па се инсталира ручно, у режиму за програмере. Потребни су [Node.js](https://nodejs.org/) 23.6 или новији и, по жељи, [Git](https://git-scm.com/).
+
+1. Преузмите изворни код (`git clone https://github.com/Tpojka/neleceni.git`, или на GitHub-у **Code → Download ZIP** па распакујте) и изградите проширење:
+   ```sh
+   cd neleceni
+   npm install
+   npm run build
+   ```
+   Готово проширење се налази у фасцикли `dist/`.
+2. У Chrome-у отворите `chrome://extensions`.
+3. Горе десно укључите **Developer mode** (режим за програмере).
+4. Кликните **Load unpacked** и изаберите фасциклу `dist/`. Отвориће се страница са подешавањима; ако вам одговарају подразумевана, само је затворите.
+5. Закачите иконицу проширења на траку са алаткама: кликните иконицу слагалице 🧩 десно од адресе, па чиоду поред **Neleceni**.
+6. Отворите пренос или снимак са канала @ParlamentSrbija.
+
+**Ажурирање:** у фасцикли пројекта покрените `git pull`, `npm install` и `npm run build`. Затим у `chrome://extensions` кликните стрелицу за поновно учитавање (↻) на картици **Neleceni** и поново учитајте отворене YouTube картице.
+
+> Chrome памти проширење по путањи до фасцикле. Ако фасциклу преместите или преименујете, уклоните проширење и поново га учитајте преко **Load unpacked**. Подешавања се тада враћају на подразумевана.
+
+### Коришћење
+
+Кад је проширење инсталирано, не морате ништа да подешавате: отворите пренос са канала @ParlamentSrbija и оно ради само.
+
+- **Ознака на видеу.** У горњем десном углу плејера стоји мала ознака:
+  - зелена тачка и **Listening**: звук се чује;
+  - црвено **Muted · Александар Вучић**: звук је утишан, уз име које је препознато.
+
+  Клик на ознаку ручно утишава или враћа звук.
+- **Пречица Alt+Shift+M** ради исто што и клик на ознаку. Ручни избор важи док се на екрану не појави натпис са другим именом; после тога проширење опет ради само. Пречицу мењате на `chrome://extensions/shortcuts`.
+- **Иконица на траци са алаткама** показује стање картице: **ON** значи да проширење прати овај видео, **MUTE** да је звук утишан.
+- **Прозорчић проширења** (клик на иконицу) има прекидач **Enabled** (укључено/искључено), тренутно стање, дугме **Mute / un-mute** и дугме **Settings** (подешавања).
+
+YouTube-ово дугме за звук и јачину звука проширење не дира. Ако сте сами утишали YouTube, проширење то неће поништити.
+
+### Подешавања
+
+Отварају се кликом на иконицу проширења → **Settings**, или у `chrome://extensions` → **Neleceni** → **Details** → **Extension options**. Измене важе кад кликнете **Save**; **Reset to defaults** враћа подразумевана подешавања. Натписи на страници подешавања су за сада на енглеском, па их овде наводимо онако како стоје на екрану.
+
+#### Кога утишати: „Speakers to mute"
+
+Ово је главно подешавање. Упишите једно име у сваки ред, онако како пише у натпису на екрану.
+
+**Пример: утишавање Александра Вучића** (ово је подразумевано подешавање):
 
 ```
-YouTube tab (content script)            Service worker               Offscreen document
-─────────────────────────────           ──────────────               ──────────────────
-every 1.5 s:
-  crop caption area of the frame
-  keep only white caption pixels ──────▶ relays OCR request ────────▶ Tesseract.js (WASM)
-                                                                       Serbian Cyrillic model
-  pick the name line, match names ◀──────────────────────────────────  text lines + positions
-  mute / un-mute via Web Audio gain
+Александар Вучић
 ```
 
-1. **Capture.** The content script draws the caption region of the current video frame onto a canvas.
-   YouTube plays through MediaSource, so the pixels can be read.
-2. **Clean up.** Only bright, grey pixels (the white caption letters) are kept, as black text on white.
-   Then every white shape that is too big to be a letter, or is cut off by the edge of the crop, is removed:
-   desks, papers and shirts behind the caption. The letters have a dark outline, so each one stays a separate
-   small shape. This is what makes OCR reliable over the busy chamber background.
-   While the large caption animates, each letter also has a thin white ring a few pixels around it. At 720p
-   the ring blurs away; at 1080p it stays and turns OCR into garbage. When most text runs in the crop are
-   1–3 px thin, a morphological opening (shrink, then grow by 1 px) removes the rings and keeps the letters.
-3. **OCR.** [Tesseract.js](https://github.com/naptha/tesseract.js) runs in an offscreen document with the Serbian
-   model. All OCR files ship inside the extension, so nothing is downloaded at runtime.
-4. **Name line only.** The caption has two lines: the speaker's name, then the parliamentary group. The group line
-   for SNS deputies is *"Александар Вучић - Србија побеђује"*, so matching the whole caption would mute every
-   member of that group. The caption comes in two sizes at different heights, so the name line is found by
-   structure: it is the line right above the group line. A group line is recognised by its spaced dash, or by
-   having more words than a name (OCR sometimes loses the dash); pieces of one line that OCR split apart are
-   joined first. Without a group line, the top line is used. A line with a listed name followed by more words
-   ("Александар Вучић Србија") is treated as a group line.
-5. **Matching.** Names are compared after Cyrillic→Latin transliteration and with a few OCR mistakes allowed.
-   "Александар Вучић", "Aleksandar Vučić" and an OCR reading like "Александар Вучи" all match. One word of the
-   name must be read whole; the others may be read as a clear piece (the wide shot gave "А екса · р Вучић").
-   A line counts as *another speaker* only if it is confident, has at least two capitalised words and does not
-   contain a listed surname, so a garbled reading of his name can never end the mute.
-6. **Mute.** The video's audio goes through a Web Audio gain node, which is set to 0. YouTube's own volume and mute
-   button are left alone.
+- Упишите и име и презиме. Свака реч мора да се поклопи, па „Александар Вучић" не утишава, рецимо, „Александар Вулин" нити „Милош Вучевић".
+- Ћирилица и латиница се рачунају као исто: „Александар Вучић" препознаје и „Aleksandar Vučić". Велика и мала слова и квачице нису битни.
+- Ако упишете само презиме („Вучић"), утишава се свако са тим презименом.
+- Још једну особу додајете у нови ред:
+  ```
+  Александар Вучић
+  Име Презиме
+  ```
+- Ако привремено не желите утишавање, искључите прекидач **Enabled** у прозорчићу проширења или у подешавањима.
 
-The mute starts on the first reading of a listed name. It ends when another speaker's name has been read 3 times.
-A caption that disappears does not end the mute, because the speech usually goes on. When you jump around in a
-replay, the state resets and the caption at the new position decides.
+> Натпис у Скупштини има два реда: име говорника и, испод њега, посланичку групу (нпр. „Александар Вучић - Србија побеђује"). Проширење чита **само ред са именом говорника**. Зато посланици из групе која носи Вучићево име **не бивају** утишани.
 
-## Tested on
+#### На ком каналу: „Channels"
 
-The replay of the 17 Nov 2026 session (`watch?v=qkmMyGsHo9o`), in a Chromium browser with the extension loaded:
+Канали на којима проширење ради, по један у реду: ознака канала (`@ParlamentSrbija`), ID канала (`UC…`) или цела адреса канала. Подразумевано: `@ParlamentSrbija` и његов ID. Ако оставите празно, проширење ради на свим YouTube видеима.
 
-| Replay time | Caption (line 1 / line 2) | Result |
+#### Где је натпис: „Caption position"
+
+Део слике у коме проширење тражи натпис, у процентима ширине и висине слике: **Left %**, **Top %**, **Width %**, **Height %**. Подразумевано је 0 / 80 / 90 / 20, односно доњих 20 % слике, што покрива обе величине натписа које Скупштина користи. Мењајте ово само ако канал промени изглед натписа или ако додате други канал. Укључите **Debug view** (испод) да видите шта проширење чита.
+
+#### Детаљи препознавања: „Detection"
+
+| Подешавање | Подразумевано | Чему служи |
 |---|---|---|
-| 4:01:12 | Large caption: Александар Вучић / Александар Вучић - Србија побеђује | Muted in the first second the caption is shown, at 720p and 1080p; stays muted through cutaways without a caption |
-| 7:22:40 | Small caption: Миленко Јованов / Александар Вучић - Србија побеђује | Listening: the group line is ignored |
-| 7:23:09 | Small caption: Александар Вучић / Александар Вучић - Србија побеђује | Muted in the first second the caption is shown (Web Audio gain 1 → 0) |
-| 7:23:09, target swapped to Јованов | the same change, in reverse | Un-muted about 5 s after the new caption (3 readings) |
-| jump back to 7:22:45 | Миленко Јованов | Listening again, gain back to 1 |
+| **Check every (ms)** | 1500 | Колико често се проверава натпис, у милисекундама. Мање значи брже утишавање, али више посла за рачунар. |
+| **White threshold (100–255)** | 225 | Колико бела морају да буду слова. Смањите ако имена не бивају препозната; повећајте ако се у текст меша позадина. |
+| **OCR language** | Serbian Cyrillic | Писмо натписа. Латиницу укључите само ако канал пише латиницом. |
+| **Other-name readings to un-mute** | 3 | Колико пута мора да се прочита друго име пре него што се звук врати. Мање значи да се звук враћа брже, али и да је грешка вероватнија. |
+| **Min. confidence for other names (%)** | 35 | Колико поуздано мора да буде прочитано друго име да би се рачунало. Утиче само на враћање звука. |
+| **Un-mute after N s without the name (0 = off)** | 0 | Враћа звук ако се име не види N секунди. Подразумевано је искључено, јер говор обично траје и кад натпис нестане са екрана. |
 
-The two caption sizes, in percent of the frame:
+#### Приказ и пречица: „Display and shortcut"
 
-| Caption | Name line | Group line | Width |
-|---|---|---|---|
-| Small (lower-left) | 90–95 % | 95.6–99 % | 2–48 % |
-| Large | 82–88 % | 89–94 % | 8–87 % |
+- **Show the status pill on the video**: приказује ознаку Listening/Muted на видеу.
+- **Debug view**: испод ознаке приказује исечак слике који проширење чита и текст који је препознало. Корисно кад подешавате „Caption position" или „White threshold".
 
-Both resolutions matter: YouTube serves 1080p to a large player and 720p or less to a small one, and the
-captions look different in each. An offline check of 29 real frames from this replay (17 at 1080p, 12 at
-720p) reads 27 correctly; the other two are frames where his first name is unreadable, which count as
-"nothing read" and change nothing.
+### Шта проширење не може
 
-OCR takes 20–220 ms per frame in the offscreen document (more at 1080p).
+- **Утишава сав звук, не само један глас.** Ако неко добаци док утишана особа говори, ни то се не чује.
+- **Ради само кад је натпис на екрану.** Видети „Где и када ради".
+- **Почетак може да се чује.** Утишавање креће кад се натпис прочита, обично у року од секунде или две.
+- **Не препознаје глас**, само натпис.
 
-## Install (developer mode)
+### Приватност
 
-Requires Node.js 23.6 or newer.
+Све се дешава на вашем рачунару. Слике из видеа не напуштају прегледач, проширење не шаље никакве податке и не повезује се ни са каквим сервером. Тражи само две дозволе: `storage` (чување подешавања) и `offscreen` (покретање препознавања текста), и ради само на `www.youtube.com`.
 
-```sh
-npm install
-npm run build
-```
+### Лиценца
 
-Then in Chrome:
+Neleceni је слободан софтвер под [MIT лиценцом](LICENSE): слободно га користите, мењате и делите, уз задржавање напомене о ауторским правима и текста лиценце. Уграђени алат за препознавање текста [Tesseract](https://github.com/naptha/tesseract.js) је под лиценцом Apache-2.0; видети [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-1. Open `chrome://extensions` and turn on **Developer mode**.
-2. Click **Load unpacked** and choose the `dist/` folder.
-3. Open a live stream or replay from @ParlamentSrbija.
+---
 
-After changing the code, run `npm run build` again and click the reload icon on the extension's card.
-`npm run watch` rebuilds on every save.
+## English
 
-## Using it
+### What Neleceni is
 
-- A **status pill** in the top-right corner of the player shows *Listening* or *Muted* and the last name read.
-  Click it to mute or un-mute by hand.
-- **Alt+Shift+M** does the same from the keyboard (change it at `chrome://extensions/shortcuts`).
-  A manual choice holds until a different speaker's caption appears, then automatic control takes over again.
-- The **toolbar badge** shows `ON` when the tab is being watched and `MUTE` while muted.
-- The **popup** has an on/off switch, the current state and a mute button.
+Neleceni is a Google Chrome extension that automatically mutes a YouTube video while a speaker you choose has the floor.
+
+It watches the name caption that the broadcast shows on the picture. When it recognises a name from your list, it mutes the sound. When a caption with another speaker's name appears, the sound comes back.
+
+It was built for the official YouTube channel of the National Assembly of Serbia, [@ParlamentSrbija](https://www.youtube.com/@ParlamentSrbija). As an example, it mutes **Aleksandar Vučić** (Александар Вучић) by default; you choose who to mute in the settings.
+
+### Where and when it works
+
+- **Browser:** Google Chrome on a computer (Windows, macOS, Linux), version 116 or newer. Also tested in Brave; other Chromium-based browsers (such as Edge) should work too.
+- **Site:** `www.youtube.com` only. Not the YouTube phone app, not `m.youtube.com`, and not YouTube players embedded in other sites.
+- **Channel:** @ParlamentSrbija only, by default. You can add other channels in the settings, but the extension only works where the channel shows the speaker's name in white letters on the picture, as the Assembly does.
+- **Live streams and replays:** both. You can skip around in a replay; the extension reads the caption again right away.
+- **Video quality:** tested at 720p and 1080p. At lower quality (480p and below) the letters are small and recognition is less reliable.
+- **The caption must be on screen.** The extension only "sees" what is written on the picture. If someone starts speaking before their caption appears (for example over wide shots of the chamber), the sound is muted only once the caption appears. Use **Alt+Shift+M** for that part.
+- **Keep the video visible.** In a background tab Chrome slows the extension down, so muting can lag. Best results: the video in its own window, or in picture-in-picture.
+
+### Installation
+
+The extension is not in the Chrome Web Store yet, so you install it by hand, in developer mode. You need [Node.js](https://nodejs.org/) 23.6 or newer and, optionally, [Git](https://git-scm.com/).
+
+1. Get the source (`git clone https://github.com/Tpojka/neleceni.git`, or on GitHub **Code → Download ZIP** and unzip it) and build the extension:
+   ```sh
+   cd neleceni
+   npm install
+   npm run build
+   ```
+   The finished extension is in the `dist/` folder.
+2. In Chrome, open `chrome://extensions`.
+3. Turn on **Developer mode** (top right).
+4. Click **Load unpacked** and choose the `dist/` folder. The settings page opens; if the defaults suit you, just close it.
+5. Pin the extension to the toolbar: click the puzzle icon 🧩 to the right of the address bar, then the pin next to **Neleceni**.
+6. Open a live stream or a replay on @ParlamentSrbija.
+
+**Updating:** in the project folder run `git pull`, `npm install` and `npm run build`. Then click the reload arrow (↻) on the **Neleceni** card in `chrome://extensions` and reload any open YouTube tabs.
+
+> Chrome identifies the extension by its folder path. If you move or rename the folder, remove the extension and load it again with **Load unpacked**. Its settings then go back to the defaults.
+
+### Using it
+
+Once installed, nothing needs setting up: open a stream on @ParlamentSrbija and it works on its own.
+
+- **Status pill on the video.** A small label sits in the top-right corner of the player:
+  - green dot and **Listening**: sound is on;
+  - red **Muted · Александар Вучић**: sound is muted, with the name that was recognised.
+
+  Click the pill to mute or un-mute by hand.
+- **Alt+Shift+M** does the same as clicking the pill. A manual choice holds until a caption with a different name appears; then the extension takes over again. Change the shortcut at `chrome://extensions/shortcuts`.
+- **Toolbar icon** shows the tab's state: **ON** means the extension is watching this video, **MUTE** means the sound is muted.
+- **Popup** (click the toolbar icon): an **Enabled** switch, the current state, a **Mute / un-mute** button and a **Settings** button.
+
+The extension does not touch YouTube's own mute button or volume. If you muted YouTube yourself, the extension won't undo it.
 
 ### Settings
 
-Open them from the popup or from the extension's *Details → Extension options*.
+Open them from the toolbar icon → **Settings**, or in `chrome://extensions` → **Neleceni** → **Details** → **Extension options**. Changes apply when you click **Save**; **Reset to defaults** restores the defaults.
 
-| Setting | Default | Notes |
+#### Who to mute: "Speakers to mute"
+
+This is the main setting. Enter one name per line, as it appears in the on-screen caption.
+
+**Example: muting Aleksandar Vučić** (this is the default):
+
+```
+Александар Вучић
+```
+
+- Enter both first name and surname. Every word must match, so "Александар Вучић" does not mute, for instance, "Александар Вулин" or "Милош Вучевић".
+- Cyrillic and Latin count as the same: "Александар Вучић" also matches "Aleksandar Vučić". Upper/lower case and diacritics don't matter.
+- A surname alone ("Вучић") mutes everyone with that surname.
+- Add another person on a new line:
+  ```
+  Александар Вучић
+  First Last
+  ```
+- To pause muting, turn off **Enabled** in the popup or in the settings.
+
+> The Assembly's caption has two lines: the speaker's name and, below it, the parliamentary group (e.g. "Александар Вучић - Србија побеђује"). The extension reads **only the speaker's name line**. So members of the group named after Vučić are **not** muted.
+
+#### Which channels: "Channels"
+
+Channels the extension works on, one per line: a channel handle (`@ParlamentSrbija`), a channel ID (`UC…`) or the full channel URL. Default: `@ParlamentSrbija` and its ID. Leave it empty to work on every YouTube video.
+
+#### Where the caption is: "Caption position"
+
+The part of the picture searched for the caption, in percent of the picture's width and height: **Left %**, **Top %**, **Width %**, **Height %**. The default is 0 / 80 / 90 / 20, the bottom 20 % of the picture, which covers both caption sizes the Assembly uses. Only change it if the channel changes its caption layout or you add another channel. Turn on **Debug view** (below) to see what the extension reads.
+
+#### Recognition details: "Detection"
+
+| Setting | Default | What it does |
 |---|---|---|
-| Speakers to mute | `Александар Вучић` | One per line; every word must match. A surname alone matches anyone with that surname. |
-| Channels | `@ParlamentSrbija` and its channel ID | Empty = every YouTube video. |
-| Caption position | left 0 %, top 80 %, width 90 %, height 20 % | Covers both caption sizes of the 17 Nov 2026 broadcast. Settings saved with the old default (88 % / 70 % / 12 %) are upgraded automatically. |
-| White threshold | 225 | Lower it if names are missed, raise it if background leaks in. |
-| Check every | 1500 ms | |
-| Other-name readings to un-mute | 3 | |
-| Min. confidence for other names | 35 % | Only for un-muting; a listed name is accepted at any confidence. |
-| Un-mute after N s without the name | 0 (off) | |
-| OCR language | Serbian Cyrillic | Add Latin only if captions use Latin script. |
-| Debug view | off | Shows the processed crop and raw OCR lines under the pill, which helps with tuning the caption position. |
+| **Check every (ms)** | 1500 | How often the caption is checked, in milliseconds. Lower mutes sooner but costs more CPU. |
+| **White threshold (100–255)** | 225 | How white the letters must be. Lower it if names are missed; raise it if the background gets mixed into the text. |
+| **OCR language** | Serbian Cyrillic | Script of the captions. Add Latin only if the channel writes in Latin script. |
+| **Other-name readings to un-mute** | 3 | How many times another name must be read before the sound comes back. Lower brings the sound back sooner but makes mistakes more likely. |
+| **Min. confidence for other names (%)** | 35 | How confidently another name must be read to count. Only affects un-muting. |
+| **Un-mute after N s without the name (0 = off)** | 0 | Brings the sound back when the name has not been seen for N seconds. Off by default, because a speech usually goes on after the caption disappears. |
 
-## Limitations
+#### Display and shortcut
 
-- **It mutes all audio, not just one voice.** If others speak while he holds the floor, they are muted too.
-  Separating voices in real time would need a source-separation model, which is far more complex.
-- **It depends on the caption.** If the broadcast changes its caption layout, adjust the caption position. A speech
-  can start without a caption: when his caption first appears at 4:01:12 in the replay, the on-screen speaking
-  timer already shows 0:59, and the shots before it are wide shots and applause with no name. Use the shortcut
-  for that part.
-- **The first second or two may be heard.** The mute starts on the first frame where the caption is read.
-- **Background tabs.** Chrome slows down timers and may stop drawing video in hidden tabs, so detection can lag
-  there. For reliable results keep the video visible: its own window, or picture-in-picture.
+- **Show the status pill on the video**: shows the Listening/Muted pill.
+- **Debug view**: shows, under the pill, the image strip the extension reads and the text it recognised. Useful when adjusting "Caption position" or "White threshold".
 
-## Privacy
+### What it cannot do
 
-Everything happens on your computer. Video frames never leave the browser, and the extension makes no network
-requests. Permissions: `storage` (settings) and `offscreen` (runs the OCR worker). It only runs on `www.youtube.com`.
+- **It mutes all sound, not one voice.** If someone interrupts while the muted person is speaking, you won't hear that either.
+- **It only works while the caption is on screen.** See "Where and when it works".
+- **The start may be heard.** Muting starts when the caption is read, usually within a second or two.
+- **It does not recognise voices**, only the caption.
 
-## Development
+### Privacy
 
-Written in **TypeScript**, bundled with **esbuild**, no UI framework.
+Everything happens on your computer. Video frames never leave the browser; the extension sends no data and connects to no server. It asks for two permissions only: `storage` (to keep your settings) and `offscreen` (to run text recognition), and it runs only on `www.youtube.com`.
 
-- TypeScript fits because the extension is mostly messages passed between four contexts (YouTube page,
-  service worker, offscreen document, popup/options). Typed message shapes and `@types/chrome` catch mistakes
-  at build time that would otherwise show up only in the browser.
-- esbuild compiles in milliseconds. The output is left unminified, so Chrome Web Store review stays easy.
-- Plain DOM code in the content script avoids YouTube's Trusted Types restrictions and keeps the bundle small.
+### Licence
 
-```sh
-npm run typecheck   # tsc --noEmit
-npm test            # node --test (runs the .ts tests directly)
-npm run check       # all of the above + build
-npm run zip         # build and pack dist/ into neleceni.zip for the Web Store
-```
+Neleceni is free software under the [MIT License](LICENSE): you may use, change and share it, keeping the copyright notice and licence text. The bundled text-recognition engine [Tesseract](https://github.com/naptha/tesseract.js) is under the Apache-2.0 licence; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-```
-src/
-  content/      YouTube page: frame capture, audio gate, channel check, status pill, main loop
-  background/   service worker: offscreen document, OCR relay, badge, keyboard shortcut
-  offscreen/    Tesseract.js worker host
-  options/      settings page
-  popup/        toolbar popup
-  shared/       settings, message types, name matching, mute state machine (pure, unit-tested)
-static/         manifest, HTML, CSS, icons
-scripts/        build script, icon generator
-test/           unit tests
-```
+---
 
-## License
+## За програмере · For developers
 
-MIT. See [LICENSE](LICENSE).
+How it works inside, the caption layouts it was tuned on, test results and build commands: [docs/how-it-works.md](docs/how-it-works.md).
