@@ -3,7 +3,7 @@
 A Chrome extension that mutes a YouTube video while a chosen speaker holds the floor.
 
 It was built for the Serbian National Assembly channel ([@ParlamentSrbija](https://www.youtube.com/@ParlamentSrbija)),
-where every speaker gets a name caption in the lower-left corner of the picture. The extension reads that caption
+where every speaker gets a two-line name caption near the bottom of the picture. The extension reads that caption
 and silences the video while a listed name is shown. It works on **live streams and on replays** of past sessions.
 
 By default it watches @ParlamentSrbija and mutes **Александар Вучић**. Both lists can be changed in the settings.
@@ -31,10 +31,16 @@ every 1.5 s:
    model. All OCR files ship inside the extension, so nothing is downloaded at runtime.
 4. **Name line only.** The caption has two lines: the speaker's name, then the parliamentary group. The group line
    for SNS deputies is *"Александар Вучић - Србија побеђује"*, so matching the whole caption would mute every
-   member of that group. Only the top line is used; lines shaped like a group name (`name - slogan`) are skipped.
+   member of that group. The caption comes in two sizes at different heights, so the name line is found by
+   structure: it is the line right above the group line. A group line is recognised by its spaced dash, or by
+   having more words than a name (OCR sometimes loses the dash); pieces of one line that OCR split apart are
+   joined first. Without a group line, the top line is used. A line with a listed name followed by more words
+   ("Александар Вучић Србија") is treated as a group line.
 5. **Matching.** Names are compared after Cyrillic→Latin transliteration and with a few OCR mistakes allowed.
    "Александар Вучић", "Aleksandar Vučić" and an OCR reading like "Александар Вучи" all match. One word of the
    name must be read whole; the others may be read as a clear piece (the wide shot gave "А екса · р Вучић").
+   A line counts as *another speaker* only if it is confident, has at least two capitalised words and does not
+   contain a listed surname, so a garbled reading of his name can never end the mute.
 6. **Mute.** The video's audio goes through a Web Audio gain node, which is set to 0. YouTube's own volume and mute
    button are left alone.
 
@@ -48,12 +54,20 @@ The replay of the 17 Nov 2026 session (`watch?v=qkmMyGsHo9o`), in a Chromium bro
 
 | Replay time | Caption (line 1 / line 2) | Result |
 |---|---|---|
-| 7:22:40 | Миленко Јованов / Александар Вучић - Србија побеђује | Listening: the group line is ignored |
-| 7:23:09 | Александар Вучић / Александар Вучић - Србија побеђује | Muted about 1 s after the caption appeared (Web Audio gain 1 → 0) |
+| 4:01:12 | Large caption: Александар Вучић / Александар Вучић - Србија побеђује | Muted in the first second the caption is shown; stays muted through cutaways without a caption |
+| 7:22:40 | Small caption: Миленко Јованов / Александар Вучић - Србија побеђује | Listening: the group line is ignored |
+| 7:23:09 | Small caption: Александар Вучић / Александар Вучић - Србија побеђује | Muted in the first second the caption is shown (Web Audio gain 1 → 0) |
 | 7:23:09, target swapped to Јованов | the same change, in reverse | Un-muted about 5 s after the new caption (3 readings) |
 | jump back to 7:22:45 | Миленко Јованов | Listening again, gain back to 1 |
 
-OCR takes 20–120 ms per frame in the offscreen document.
+The two caption sizes, in percent of the frame:
+
+| Caption | Name line | Group line | Width |
+|---|---|---|---|
+| Small (lower-left) | 90–95 % | 95.6–99 % | 2–48 % |
+| Large | 82–88 % | 89–94 % | 8–87 % |
+
+OCR takes 20–130 ms per frame in the offscreen document.
 
 ## Install (developer mode)
 
@@ -90,7 +104,7 @@ Open them from the popup or from the extension's *Details → Extension options*
 |---|---|---|
 | Speakers to mute | `Александар Вучић` | One per line; every word must match. A surname alone matches anyone with that surname. |
 | Channels | `@ParlamentSrbija` and its channel ID | Empty = every YouTube video. |
-| Caption position | left 0 %, top 88 %, width 70 %, height 12 % | Measured on the 17 Nov 2026 broadcast. The name line must sit in the upper part of the area. |
+| Caption position | left 0 %, top 80 %, width 90 %, height 20 % | Covers both caption sizes of the 17 Nov 2026 broadcast. Settings saved with the old default (88 % / 70 % / 12 %) are upgraded automatically. |
 | White threshold | 225 | Lower it if names are missed, raise it if background leaks in. |
 | Check every | 1500 ms | |
 | Other-name readings to un-mute | 3 | |
@@ -103,8 +117,9 @@ Open them from the popup or from the extension's *Details → Extension options*
 
 - **It mutes all audio, not just one voice.** If others speak while he holds the floor, they are muted too.
   Separating voices in real time would need a source-separation model, which is far more complex.
-- **It depends on the caption.** If the broadcast changes its caption layout, adjust the caption position. If a speech
-  starts without a caption, use the shortcut.
+- **It depends on the caption.** If the broadcast changes its caption layout, adjust the caption position. A speech
+  can start without a caption: at 4:00:30 in the replay he speaks for about 40 s over wide shots and applause before
+  his caption first appears at 4:01:12. Use the shortcut for that.
 - **The first second or two may be heard.** The mute starts on the first frame where the caption is read.
 - **Background tabs.** Chrome slows down timers and may stop drawing video in hidden tabs, so detection can lag
   there. For reliable results keep the video visible: its own window, or picture-in-picture.

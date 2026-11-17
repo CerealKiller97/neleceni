@@ -145,11 +145,13 @@ async function tick(): Promise<void> {
   } else {
     const res = await ocr(cap.dataUrl);
     if (!res.ok) throw new Error(res.error);
-    obs = classify(res.lines, cap.height, settings.speakers, settings.minConfidence);
+    obs = classify(res.lines, settings.speakers, settings.minConfidence);
     lastSig = cap.signature;
     lastSigAt = now;
     lastOcrText =
-      res.lines.map((l) => `${Math.round(l.confidence).toString().padStart(3)}%  ${l.text}`).join('\n') +
+      res.lines
+        .map((l) => `${Math.round(l.confidence).toString().padStart(3)}%  y${l.y0}-${l.y1}  ${l.text}`)
+        .join('\n') +
       `\n→ ${obs.kind}  (${res.ms} ms)`;
   }
   // The video may have changed while OCR was running.

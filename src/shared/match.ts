@@ -73,7 +73,8 @@ export function allowedErrors(tokenLength: number): number {
  * Every word of the name must be found in the line, fuzzily. At least one word must be found
  * whole; the others may also be found as a recognisable piece, because letters over a bright
  * background get lost: the replay read "Александар Вучић" as "А екса · р Вучић", where "екса"
- * is a piece of "Александар". A piece must be at least 3 letters and 40 % of the word.
+ * is a piece of "Александар". A piece must be at least 3 letters and 40 % of the word; pieces of
+ * 6+ letters may have two OCR mistakes ("ексанћр" in a wide shot).
  */
 export function lineMatchesName(line: string, name: string): boolean {
   const tokens = normalize(name).split(' ').filter(Boolean);
@@ -86,7 +87,7 @@ export function lineMatchesName(line: string, name: string): boolean {
   const piece = (t: string) =>
     words.some(
       (w) => w.length >= Math.max(3, Math.ceil(t.length * 0.4)) && w.length < t.length &&
-        substringDistance(t, w) <= allowedErrors(w.length),
+        substringDistance(t, w) <= (w.length >= 6 ? 2 : allowedErrors(w.length)),
     );
 
   const found = tokens.map(whole);
@@ -97,16 +98,48 @@ export interface OcrLine {
   text: string;
   /** 0–100 as reported by Tesseract. */
   confidence: number;
-  /** Top and bottom of the line, in pixels of the OCR image. */
+  /** Bounding box of the line, in pixels of the OCR image. */
+  x0: number;
   y0: number;
+  x1: number;
   y1: number;
 }
 
-/** A line whose centre lies below this fraction of the crop is treated as the group/party line. */
-export const NAME_ZONE = 0.6;
+/**
+ * Join pieces of the same text row. Tesseract's layout analysis sometimes splits one caption
+ * line into several blocks, e.g. ",ександар Ву" and ". у Србија побеђује". Pieces without letters
+ * ("—", "„") are dropped first: a tall dash can touch two rows and would glue them together.
+ * The rest are one row when their vertical centres are within 40 % of a line height.
+ */
+export function mergeRows(lines: OcrLine[]): OcrLine[] {
+  const rows: OcrLine[][] = [];
+  const centre = (l: OcrLine) => (l.y0 + l.y1) / 2;
+  const sameRow = (a: OcrLine, b: OcrLine) =>
+    Math.abs(centre(a) - centre(b)) <= 0.4 * Math.min(a.y1 - a.y0, b.y1 - b.y0);
+  const withLetters = lines.filter((l) => /\p{L}/u.test(l.text));
+  for (const l of withLetters.sort((a, b) => centre(a) - centre(b))) {
+    const row = rows.find((r) => sameRow(r[0]!, l));
+    if (row) row.push(l);
+    else rows.push([l]);
+  }
+  return rows.map((r) => {
+    if (r.length === 1) return r[0]!;
+    r.sort((a, b) => a.x0 - b.x0);
+    const weight = (l: OcrLine) => Math.max(1, l.text.length);
+    const total = r.reduce((n, l) => n + weight(l), 0);
+    return {
+      text: r.map((l) => l.text).join(' '),
+      confidence: r.reduce((n, l) => n + l.confidence * weight(l), 0) / total,
+      x0: Math.min(...r.map((l) => l.x0)),
+      y0: Math.min(...r.map((l) => l.y0)),
+      x1: Math.max(...r.map((l) => l.x1)),
+      y1: Math.max(...r.map((l) => l.y1)),
+    };
+  });
+}
 
 /** Parliamentary group lines read like "Александар Вучић - Србија побеђује": a dash with spaces around it. */
-const GROUP_LINE = /\s[-–—]\s/;
+const GROUP_DASH = /\s[-–—]\s/;
 
 const trimNoise = (s: string): string => s.replace(/^[^\p{L}]+|[^\p{L}]+$/gu, '');
 
@@ -122,22 +155,67 @@ export function cleanLine(text: string): string {
 /** Words of at least 3 letters, which is what a real name is made of. */
 export const nameWords = (text: string): string[] => normalize(text).split(' ').filter((w) => w.length >= 3);
 
+/** Words of at least 3 letters that start with a capital, as names in the caption do. */
+export const capitalisedWords = (text: string): string[] =>
+  text.split(/[^\p{L}]+/u).filter((w) => w.length >= 3 && /^\p{Lu}/u.test(w));
+
+/**
+ * The parliamentary group line: it has a spaced dash ("Александар Вучић - Србија побеђује"),
+ * or, when OCR lost the dash, more words than a name has ("Александар Вучић Србија побеђује").
+ */
+export function isGroupLine(text: string): boolean {
+  return GROUP_DASH.test(text) || nameWords(text).length >= 4;
+}
+
 /**
  * Pick the line that holds the speaker's name.
  *
- * The parliament caption has two lines: the name, then the parliamentary group. The group
- * often contains a party leader's name, so only the top line may decide anything. Lines that
- * look like a group line, or that sit in the lower part of the crop, are skipped.
+ * The parliament caption has two lines: the name, then the parliamentary group. The group is
+ * often named after a party leader, so the group line must never decide anything. The caption
+ * comes in two sizes at different heights, so the name line is found by structure rather than
+ * position: it is the line right above the group line. Without a visible group line (a speaker
+ * with no group, or the group line was not read), the top line is used.
  */
-export function pickSpeakerLine(lines: OcrLine[], imageHeight: number): OcrLine | null {
-  const candidates = lines
+export function pickSpeakerLine(lines: OcrLine[]): OcrLine | null {
+  const sorted = mergeRows(lines)
     .map((l) => ({ ...l, text: trimNoise(l.text.trim()) }))
-    .filter((l) => nameWords(l.text).length >= 1 && !GROUP_LINE.test(l.text))
+    .filter((l) => nameWords(l.text).length >= 1)
     .sort((a, b) => a.y0 - b.y0);
-  const top = candidates[0];
-  if (!top) return null;
-  if (imageHeight > 0 && (top.y0 + top.y1) / 2 > imageHeight * NAME_ZONE) return null;
-  return top;
+
+  const g = sorted.findIndex((l) => isGroupLine(l.text));
+  if (g === -1) return sorted[0] ?? null;
+
+  const group = sorted[g]!;
+  const lineHeight = group.y1 - group.y0;
+  // Closest line above the group line, no more than one line height away.
+  for (let i = g - 1; i >= 0; i--) {
+    const l = sorted[i]!;
+    if (isGroupLine(l.text)) continue;
+    return group.y0 - l.y1 <= lineHeight ? l : null;
+  }
+  return null;
+}
+
+/**
+ * True when real words follow the name, as in a group line whose dash OCR lost
+ * ("Александар Вучић Србија"). A name line has at most short noise after the surname.
+ */
+export function hasWordsAfterName(line: string, name: string): boolean {
+  const words = normalize(line).split(' ').filter(Boolean);
+  const last = normalize(name).split(' ').filter(Boolean).at(-1);
+  if (!last) return false;
+  let end = -1;
+  words.forEach((w, i) => {
+    if (substringDistance(w, last) <= allowedErrors(last.length)) end = i;
+  });
+  return end >= 0 && words.slice(end + 1).some((w) => w.length >= 4);
+}
+
+/** True when the last word of `name` (the surname) is read whole somewhere in `line`. */
+export function mentionsSurname(line: string, name: string): boolean {
+  const last = normalize(name).split(' ').filter(Boolean).at(-1);
+  const compact = normalize(line).replace(/ /g, '');
+  return !!last && last.length >= 4 && substringDistance(compact, last) <= allowedErrors(last.length);
 }
 
 export type Observation =
@@ -146,19 +224,23 @@ export type Observation =
   | { kind: 'other'; line: string };
 
 /** Turn OCR output into one observation for the mute state machine. */
-export function classify(
-  lines: OcrLine[],
-  imageHeight: number,
-  speakers: string[],
-  minConfidence: number,
-): Observation {
-  const line = pickSpeakerLine(lines, imageHeight);
+export function classify(lines: OcrLine[], speakers: string[], minConfidence: number): Observation {
+  const line = pickSpeakerLine(lines);
   if (!line) return { kind: 'none' };
   const hit = speakers.find((name) => lineMatchesName(line.text, name));
-  // Report the configured spelling, not the (often garbled) OCR text.
-  if (hit) return { kind: 'target', name: hit, line: hit };
-  // Another speaker needs a confident, name-shaped line: at least two real words.
-  if (line.confidence >= minConfidence && nameWords(line.text).length >= 2) {
+  if (hit) {
+    // A listed name followed by more words is a group line ("Александар Вучић Србија"): it
+    // tells us nothing about who is speaking.
+    if (hasWordsAfterName(line.text, hit)) return { kind: 'none' };
+    // Report the configured spelling, not the (often garbled) OCR text.
+    return { kind: 'target', name: hit, line: hit };
+  }
+  // A garbled reading of a listed name ("Хиоса ћр ву Вучић") must not count as someone else,
+  // or it could end the mute while that person is still speaking.
+  if (speakers.some((name) => mentionsSurname(line.text, name))) return { kind: 'none' };
+  // Another speaker needs a confident, name-shaped line: at least two capitalised words.
+  // This keeps background noise from counting towards an un-mute.
+  if (line.confidence >= minConfidence && capitalisedWords(line.text).length >= 2) {
     return { kind: 'other', line: cleanLine(line.text) };
   }
   return { kind: 'none' };

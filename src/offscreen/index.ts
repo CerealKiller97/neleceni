@@ -43,7 +43,14 @@ async function recognize(image: string, langs: string): Promise<OcrResponse> {
   const { data } = await w.recognize(image, {}, { text: true, blocks: true });
   const lines: OcrLine[] = (data.blocks ?? []).flatMap((b) =>
     b.paragraphs.flatMap((p) =>
-      p.lines.map((l) => ({ text: l.text.trim(), confidence: l.confidence, y0: l.bbox.y0, y1: l.bbox.y1 })),
+      p.lines.map((l) => ({
+        text: l.text.trim(),
+        confidence: l.confidence,
+        x0: l.bbox.x0,
+        y0: l.bbox.y0,
+        x1: l.bbox.x1,
+        y1: l.bbox.y1,
+      })),
     ),
   );
   return { ok: true, lines: lines.filter((l) => l.text), ms: Math.round(performance.now() - started) };

@@ -47,9 +47,10 @@
         <section class="stack">
           <h2>Caption position</h2>
           <p class="hint">
-            Where the name caption sits, in percent of the video frame. The first text line in this area is
-            read as the speaker's name; the line below it (the parliamentary group) is ignored, so keep the
-            name in the upper half of the area. Turn on the debug view to see exactly what is read.
+            Where the name caption sits, in percent of the video frame. The default covers both caption sizes the
+            parliament uses. The line right above the parliamentary group line (the one with " - ") is read as the
+            speaker's name; the group line itself is ignored. Without a group line, the top line is used.
+            Turn on the debug view to see exactly what is read.
           </p>
           <div class="row">
             <label class="field"><span>Left %</span><input type="number" name="region.x" min="0" max="99" step="0.5" /></label>

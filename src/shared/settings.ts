@@ -37,9 +37,10 @@ export const DEFAULT_SETTINGS: Settings = {
   enabled: true,
   channels: ['@ParlamentSrbija', 'UCghngrfQwzJ4aaPZ-UgNIZQ'],
   speakers: ['Александар Вучић'],
-  // Measured on the 17 Nov 2026 broadcast: two white lines in the lower-left corner,
-  // name on the first line, parliamentary group on the second.
-  region: { x: 0, y: 88, w: 70, h: 12 },
+  // Measured on the 17 Nov 2026 broadcast. The caption (name, then parliamentary group) comes
+  // in two sizes: small in the lower-left corner (lines at 90–99 % of the height, 2–48 % of the
+  // width) and large (lines at 82–94 %, 8–87 %). This region covers both.
+  region: { x: 0, y: 80, w: 90, h: 20 },
   whiteThreshold: 225,
   intervalMs: 1500,
   // Real name lines over the busy parliament background read at 27–57 %; pure noise at ~0 %.
@@ -58,6 +59,12 @@ const clamp = (n: unknown, lo: number, hi: number, fallback: number): number => 
   return Math.min(hi, Math.max(lo, v));
 };
 
+/** Earlier default regions; settings saved with one of them get the current default instead. */
+const OLD_DEFAULT_REGIONS: Region[] = [{ x: 0, y: 88, w: 70, h: 12 }];
+
+const isOldDefault = (r: Partial<Record<keyof Region, unknown>>): boolean =>
+  OLD_DEFAULT_REGIONS.some((o) => o.x === r.x && o.y === r.y && o.w === r.w && o.h === r.h);
+
 const stringList = (v: unknown, fallback: string[]): string[] =>
   Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string' && s.trim() !== '').map((s) => s.trim()) : fallback;
 
@@ -65,7 +72,8 @@ const stringList = (v: unknown, fallback: string[]): string[] =>
 export function sanitize(raw: unknown): Settings {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Partial<Record<keyof Settings, unknown>>;
   const d = DEFAULT_SETTINGS;
-  const reg = (r.region && typeof r.region === 'object' ? r.region : {}) as Partial<Record<keyof Region, unknown>>;
+  let reg = (r.region && typeof r.region === 'object' ? r.region : {}) as Partial<Record<keyof Region, unknown>>;
+  if (isOldDefault(reg)) reg = {};
   const x = clamp(reg.x, 0, 99, d.region.x);
   const y = clamp(reg.y, 0, 99, d.region.y);
   return {

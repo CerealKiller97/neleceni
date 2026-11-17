@@ -4,9 +4,15 @@ import { classify, lineMatchesName, normalize, pickSpeakerLine, similarLines, ty
 import { channelKey } from '../src/content/channel.ts';
 
 const TARGET = ['Александар Вучић'];
-// Two-line caption, as on the 17 Nov 2026 broadcast (crop ~150 px tall).
-const line = (text: string, y0: number, confidence = 80): OcrLine => ({ text, confidence, y0, y1: y0 + 40 });
-const H = 160;
+// Caption lines as Tesseract reports them: 40 px tall, `y0` from the top of the crop.
+const line = (text: string, y0: number, confidence = 80, x0 = 0): OcrLine => ({
+  text,
+  confidence,
+  x0,
+  y0,
+  x1: x0 + 600,
+  y1: y0 + 40,
+});
 
 describe('normalize', () => {
   it('maps Cyrillic and Latin spellings to the same string', () => {
@@ -43,37 +49,52 @@ describe('lineMatchesName', () => {
 });
 
 describe('pickSpeakerLine', () => {
-  it('takes the top line and skips the parliamentary group line', () => {
-    const picked = pickSpeakerLine([line('– Александар Вучић - Србија побеђује', 85), line('Ана Брнабић', 20)], H);
+  it('takes the line right above the parliamentary group line', () => {
+    const picked = pickSpeakerLine([line('– Александар Вучић - Србија побеђује', 85), line('Ана Брнабић', 40)]);
     assert.equal(picked?.text, 'Ана Брнабић');
   });
-  it('ignores a lone line in the lower part of the crop', () => {
-    assert.equal(pickSpeakerLine([line('Александар Вучић Србија побеђује', 85)], H), null);
+  it('skips background noise above the caption', () => {
+    // Small caption at the bottom of the tall crop, with chamber noise read above it.
+    const picked = pickSpeakerLine([
+      line('Ммм Шшш', 5, 40),
+      line('Миленко Јованов', 110),
+      line('Александар Вучић - Србија побеђује', 152),
+    ]);
+    assert.equal(picked?.text, 'Миленко Јованов');
+  });
+  it('treats a dash-less line with too many words as the group line', () => {
+    assert.equal(pickSpeakerLine([line('Александар Вучић Србија побеђује', 85)]), null);
+  });
+  it('ignores a line too far above the group line', () => {
+    assert.equal(pickSpeakerLine([line('Ана Брнабић', 0), line('Александар Вучић - Србија побеђује', 120)]), null);
+  });
+  it('uses the top line when there is no group line', () => {
+    assert.equal(pickSpeakerLine([line('Ана Брнабић', 60), line('Председник Народне скупштине', 104)])?.text, 'Ана Брнабић');
   });
 });
 
 describe('classify', () => {
   it('reports the target from the real two-line caption', () => {
     const lines = [line('__Александар Вучић, | а', 18, 63), line('– Александар Вучић - Србија побеђује“ #Ћ А', 82, 63)];
-    assert.deepEqual(classify(lines, H, TARGET, 35), { kind: 'target', name: TARGET[0], line: 'Александар Вучић' });
+    assert.deepEqual(classify(lines, TARGET, 35), { kind: 'target', name: TARGET[0], line: 'Александар Вучић' });
   });
   it('does not mute a deputy whose group is named after the target', () => {
     const lines = [line('Ана Брнабић', 18), line('Александар Вучић - Србија побеђује', 82)];
-    assert.deepEqual(classify(lines, H, TARGET, 35), { kind: 'other', line: 'Ана Брнабић' });
+    assert.deepEqual(classify(lines, TARGET, 35), { kind: 'other', line: 'Ана Брнабић' });
   });
   it('reads nothing when only the group line was recognised', () => {
-    assert.deepEqual(classify([line('Александар Вучић - Србија побеђује', 82)], H, TARGET, 35), { kind: 'none' });
+    assert.deepEqual(classify([line('Александар Вучић - Србија побеђује', 82)], TARGET, 35), { kind: 'none' });
   });
   it('needs confidence before calling something another speaker', () => {
-    assert.deepEqual(classify([line('Аракоашир Учи Вав', 18, 28)], H, TARGET, 35), { kind: 'none' });
+    assert.deepEqual(classify([line('Аракоашир Учи Вав', 18, 28)], TARGET, 35), { kind: 'none' });
   });
   it('accepts a low-confidence line that still spells the target', () => {
-    assert.equal(classify([line('Александар Вучи', 18, 30)], H, TARGET, 35).kind, 'target');
+    assert.equal(classify([line('Александар Вучи', 18, 30)], TARGET, 35).kind, 'target');
   });
   // Readings logged from the 17 Nov 2026 replay in a real browser.
   it('handles real replay readings', () => {
     const replay = (top: string, bottom: string, conf = 50) => [line(top, 18, conf), line(bottom, 82, conf)];
-    const k = (l: OcrLine[]) => classify(l, H, TARGET, 35).kind;
+    const k = (l: OcrLine[]) => classify(l, TARGET, 35).kind;
     assert.equal(k(replay('Миленко Јованов —', 'Александар ВучиЋ- УСрбија побеђује', 54)), 'other');
     assert.equal(k(replay('Миленко Јованбв. “У __', 'Александар ВучтЋ УСрбија побеђује.', 41)), 'other');
     assert.equal(k(replay('у. ипенкађованов', 'ФЏДдександар Ву Србија побеђује', 50)), 'none');
@@ -82,6 +103,41 @@ describe('classify', () => {
     assert.equal(k(replay('"Фалекса дар Вучић % =', 'фудександар Ву у Србија побеђује |')), 'target');
     // Wide shot: both caption lines merged into one; the group-line dash keeps it from counting.
     assert.equal(k([line('__Алекбиндарвучнијрдајр Вучић - Сромја п', 18, 57)]), 'none');
+  });
+  it('reads both caption sizes in the 80–100 % crop', () => {
+    // Large caption (4:01:12 in the replay): lines high in the crop.
+    assert.equal(classify([line('Александар Вучић', 20), line('Александар Вучић - Србија побеђује', 64)], TARGET, 35).kind, 'target');
+    // Small caption (7:22:40): lines low in the crop, Vučić only in the group line.
+    assert.equal(classify([line('Миленко Јованов', 110), line('Александар Вучић - Србија побеђује', 152)], TARGET, 35).kind, 'other');
+  });
+  it('joins a caption line that OCR split into pieces (wide shot at 7:23:11)', () => {
+    const lines = [
+      line('У ексанћр Вучић', 110, 51, 40),
+      line('ко', 112, 25, 700),
+      line(',ександар Ву ~', 152, 62, 30),
+      line('у', 154, 71, 400),
+      line('. у Србија побеђује', 151, 71, 560),
+    ];
+    assert.equal(classify(lines, TARGET, 35).kind, 'target');
+  });
+  it('does not take a dash-less group line for the name when the name line was missed', () => {
+    assert.equal(classify([line('Александар Вучић Србија', 152)], TARGET, 35).kind, 'none');
+    assert.equal(classify([line('Александар Вучић ние', 110)], TARGET, 35).kind, 'target'); // short noise is fine
+  });
+  it('does not let a tall dash glue the name and group lines together', () => {
+    const lines = [
+      line('Александар Вучић ;', 110, 68, 40),
+      { text: '—', confidence: 53, x0: 900, y0: 105, x1: 930, y1: 195 },
+      line('Александар Вучић Србија побеђује“', 152, 51, 30),
+    ];
+    assert.equal(classify(lines, TARGET, 35).kind, 'target');
+  });
+  it('never counts a garbled reading of the target as another speaker', () => {
+    assert.equal(classify([line('Хиоса ћр ву Вучић', 60, 63)], TARGET, 35).kind, 'none'); // 7:23:12
+    assert.equal(classify([line('Милош Вучевић', 60, 80)], TARGET, 35).kind, 'other'); // similar surname is fine
+  });
+  it('does not count lower-case noise as another speaker', () => {
+    assert.equal(classify([line('ииии тттт сссс', 30, 70)], TARGET, 35).kind, 'none');
   });
 });
 
