@@ -27,6 +27,9 @@ every 1.5 s:
    Then every white shape that is too big to be a letter, or is cut off by the edge of the crop, is removed:
    desks, papers and shirts behind the caption. The letters have a dark outline, so each one stays a separate
    small shape. This is what makes OCR reliable over the busy chamber background.
+   While the large caption animates, each letter also has a thin white ring a few pixels around it. At 720p
+   the ring blurs away; at 1080p it stays and turns OCR into garbage. When most text runs in the crop are
+   1–3 px thin, a morphological opening (shrink, then grow by 1 px) removes the rings and keeps the letters.
 3. **OCR.** [Tesseract.js](https://github.com/naptha/tesseract.js) runs in an offscreen document with the Serbian
    model. All OCR files ship inside the extension, so nothing is downloaded at runtime.
 4. **Name line only.** The caption has two lines: the speaker's name, then the parliamentary group. The group line
@@ -54,7 +57,7 @@ The replay of the 17 Nov 2026 session (`watch?v=qkmMyGsHo9o`), in a Chromium bro
 
 | Replay time | Caption (line 1 / line 2) | Result |
 |---|---|---|
-| 4:01:12 | Large caption: Александар Вучић / Александар Вучић - Србија побеђује | Muted in the first second the caption is shown; stays muted through cutaways without a caption |
+| 4:01:12 | Large caption: Александар Вучић / Александар Вучић - Србија побеђује | Muted in the first second the caption is shown, at 720p and 1080p; stays muted through cutaways without a caption |
 | 7:22:40 | Small caption: Миленко Јованов / Александар Вучић - Србија побеђује | Listening: the group line is ignored |
 | 7:23:09 | Small caption: Александар Вучић / Александар Вучић - Србија побеђује | Muted in the first second the caption is shown (Web Audio gain 1 → 0) |
 | 7:23:09, target swapped to Јованов | the same change, in reverse | Un-muted about 5 s after the new caption (3 readings) |
@@ -67,7 +70,12 @@ The two caption sizes, in percent of the frame:
 | Small (lower-left) | 90–95 % | 95.6–99 % | 2–48 % |
 | Large | 82–88 % | 89–94 % | 8–87 % |
 
-OCR takes 20–130 ms per frame in the offscreen document.
+Both resolutions matter: YouTube serves 1080p to a large player and 720p or less to a small one, and the
+captions look different in each. An offline check of 29 real frames from this replay (17 at 1080p, 12 at
+720p) reads 27 correctly; the other two are frames where his first name is unreadable, which count as
+"nothing read" and change nothing.
+
+OCR takes 20–220 ms per frame in the offscreen document (more at 1080p).
 
 ## Install (developer mode)
 

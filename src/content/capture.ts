@@ -1,4 +1,4 @@
-import { keepGlyphs, limitsFor } from '../shared/glyphs.ts';
+import { binarize } from '../shared/binarize.ts';
 import type { Region } from '../shared/settings.ts';
 
 export interface Capture {
@@ -17,8 +17,6 @@ const TARGET_HEIGHT = 160;
 const PAD = 12;
 const SIG_W = 48;
 const SIG_H = 8;
-/** A white pixel must also be grey-ish: max(R,G,B) − min(R,G,B) at most this. */
-const MAX_CHROMA = 40;
 
 const work = document.createElement('canvas');
 const workCtx = work.getContext('2d', { willReadFrequently: true })!;
@@ -41,6 +39,8 @@ export function captureCaption(video: HTMLVideoElement, region: Region, whiteThr
   const sy = Math.round((region.y / 100) * vh);
   const sw = Math.max(1, Math.round((region.w / 100) * vw));
   const sh = Math.max(1, Math.round((region.h / 100) * vh));
+  // Small crops are enlarged for Tesseract. Large ones are kept as they are: shrinking a 1080p
+  // frame half-blurs the hollow cores of the large caption's letters, which then can't be filled.
   const scale = Math.min(3, Math.max(1, TARGET_HEIGHT / sh));
   const dw = Math.round(sw * scale);
   const dh = Math.round(sh * scale);
@@ -52,20 +52,9 @@ export function captureCaption(video: HTMLVideoElement, region: Region, whiteThr
   const img = workCtx.getImageData(0, 0, dw, dh);
   const px = img.data;
 
-  // 1. White, grey-ish pixels are candidate caption text.
-  const mask = new Uint8Array(dw * dh);
-  for (let p = 0, i = 0; p < mask.length; p++, i += 4) {
-    const r = px[i]!;
-    const g = px[i + 1]!;
-    const b = px[i + 2]!;
-    const lo = Math.min(r, g, b);
-    mask[p] = lo >= whiteThreshold && Math.max(r, g, b) - lo <= MAX_CHROMA ? 1 : 0;
-  }
+  const { mask, ink } = binarize(px, dw, dh, { whiteThreshold });
 
-  // 2. Keep only letter-sized shapes (drops desks, papers, shirts).
-  const ink = keepGlyphs(mask, dw, dh, limitsFor(dh));
-
-  // 3. Black text on white for Tesseract, plus a coarse signature of what is left.
+  // Black text on white for Tesseract, plus a coarse signature of what is left.
   const sig = new Uint32Array(SIG_W * SIG_H);
   for (let y = 0; y < dh; y++) {
     const sigRow = Math.min(SIG_H - 1, Math.floor((y * SIG_H) / dh)) * SIG_W;

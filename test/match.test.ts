@@ -136,6 +136,29 @@ describe('classify', () => {
     assert.equal(classify([line('Хиоса ћр ву Вучић', 60, 63)], TARGET, 35).kind, 'none'); // 7:23:12
     assert.equal(classify([line('Милош Вучевић', 60, 80)], TARGET, 35).kind, 'other'); // similar surname is fine
   });
+  // 1080p readings from the offline bench (17 Nov replay).
+  it('accepts a long first name with several OCR errors next to a clean surname', () => {
+    assert.ok(lineMatchesName('АпењСандар Вучић', TARGET[0]!)); // 4:01:12, large caption
+    assert.ok(lineMatchesName('м аксанћр Вучић ид', TARGET[0]!)); // 7:23:10, wide shot
+    assert.ok(!lineMatchesName('Александар Вулин', TARGET[0]!));
+    assert.ok(!lineMatchesName('Андрија Вучић', TARGET[0]!));
+  });
+  it('finds a dash-less 3-word group line and skips junk lines', () => {
+    const lines = [
+      line('о ЖАО г,', 10, 0, 20),
+      line('м ексанр Вучић “и', 100, 56, 40),
+      line('« ександар Ву ‘“ ..уСрбија побеђује', 150, 59, 30),
+    ];
+    assert.equal(classify(lines, TARGET, 35).kind, 'target');
+  });
+  it('skips a junk line between the name and the group line', () => {
+    const lines = [
+      { text: 'алексанћр Вучић к“', confidence: 28, x0: 40, y0: 55, x1: 500, y1: 138 },
+      { text: 'у РУЧа ~ о :', confidence: 5, x0: 300, y0: 56, x1: 600, y1: 104 },
+      line(',ександар Ву ~ . у Србија побеђује', 130, 70, 30),
+    ];
+    assert.equal(classify(lines, TARGET, 35).kind, 'target');
+  });
   it('does not count lower-case noise as another speaker', () => {
     assert.equal(classify([line('ииии тттт сссс', 30, 70)], TARGET, 35).kind, 'none');
   });

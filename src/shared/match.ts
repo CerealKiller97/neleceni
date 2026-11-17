@@ -74,7 +74,9 @@ export function allowedErrors(tokenLength: number): number {
  * whole; the others may also be found as a recognisable piece, because letters over a bright
  * background get lost: the replay read "Александар Вучић" as "А екса · р Вучић", where "екса"
  * is a piece of "Александар". A piece must be at least 3 letters and 40 % of the word; pieces of
- * 6+ letters may have two OCR mistakes ("ексанћр" in a wide shot).
+ * 6+ letters may have two OCR mistakes ("ексанћр" in a wide shot). A long word (6+ letters) may
+ * also be found with up to 40 % of its letters wrong ("АпењСандар", "аксанћр"), but only next to
+ * another word found whole, so "Александар Вулин" still does not match "Александар Вучић".
  */
 export function lineMatchesName(line: string, name: string): boolean {
   const tokens = normalize(name).split(' ').filter(Boolean);
@@ -90,8 +92,10 @@ export function lineMatchesName(line: string, name: string): boolean {
         substringDistance(t, w) <= (w.length >= 6 ? 2 : allowedErrors(w.length)),
     );
 
+  const loose = (t: string) => t.length >= 6 && substringDistance(compact, t) <= Math.floor(t.length * 0.4);
+
   const found = tokens.map(whole);
-  return found.some(Boolean) && tokens.every((t, i) => found[i] || piece(t));
+  return found.some(Boolean) && tokens.every((t, i) => found[i] || piece(t) || loose(t));
 }
 
 export interface OcrLine {
@@ -138,6 +142,9 @@ export function mergeRows(lines: OcrLine[]): OcrLine[] {
   });
 }
 
+/** Lines read with less confidence than this are OCR noise and never taken for the name line. */
+const JUNK_CONFIDENCE = 10;
+
 /** Parliamentary group lines read like "Александар Вучић - Србија побеђује": a dash with spaces around it. */
 const GROUP_DASH = /\s[-–—]\s/;
 
@@ -173,16 +180,25 @@ export function isGroupLine(text: string): boolean {
  * The parliament caption has two lines: the name, then the parliamentary group. The group is
  * often named after a party leader, so the group line must never decide anything. The caption
  * comes in two sizes at different heights, so the name line is found by structure rather than
- * position: it is the line right above the group line. Without a visible group line (a speaker
- * with no group, or the group line was not read), the top line is used.
+ * position: it is the line right above the group line. If no line has the group dash or 4+ words,
+ * a 3-word line with another line right above it is taken as the group line (OCR lost the dash).
+ * Without any group line (a speaker with no group), the top readable line is used.
  */
 export function pickSpeakerLine(lines: OcrLine[]): OcrLine | null {
-  const sorted = mergeRows(lines)
+  // OCR junk goes first, so it can neither be taken for the name nor be merged into it.
+  const sorted = mergeRows(lines.filter((l) => l.confidence >= JUNK_CONFIDENCE))
     .map((l) => ({ ...l, text: trimNoise(l.text.trim()) }))
     .filter((l) => nameWords(l.text).length >= 1)
     .sort((a, b) => a.y0 - b.y0);
 
-  const g = sorted.findIndex((l) => isGroupLine(l.text));
+  const above = (i: number) => {
+    const l = sorted[i]!;
+    const prev = sorted[i - 1];
+    return !!prev && l.y0 - prev.y1 <= l.y1 - l.y0;
+  };
+  let g = sorted.findIndex((l) => isGroupLine(l.text));
+  if (g === -1) g = sorted.findIndex((l, i) => nameWords(l.text).length >= 3 && above(i));
+  // No group line: the top line.
   if (g === -1) return sorted[0] ?? null;
 
   const group = sorted[g]!;
