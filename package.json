@@ -1,0 +1,30 @@
+{
+  "name": "shut-down-577",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension that mutes a YouTube stream while a chosen speaker holds the floor, by reading the on-screen name caption.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "check": "npm run typecheck && npm test && npm run build",
+    "zip": "npm run build && cd dist && zip -qr ../shut-down-577.zip . && cd .. && echo 'Wrote shut-down-577.zip'"
+  },
+  "engines": {
+    "node": ">=23.6"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chrome": "^0.3.7",
+    "@types/node": "^26.6.6",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@tesseract.js-data/srp": "^1.0.0",
+    "@tesseract.js-data/srp_latn": "^1.0.0",
+    "tesseract.js": "^7.0.0"
+  }
+}
