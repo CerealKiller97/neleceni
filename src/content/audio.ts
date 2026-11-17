@@ -35,6 +35,14 @@ export class AudioGate {
     }
   }
 
+  /** One-line description of the audio path, for the debug view. */
+  describe(video: HTMLMediaElement): string {
+    const gain = this.gains.get(video);
+    if (gain && this.ctx) return `audio: Web Audio, gain ${gain.gain.value.toFixed(2)}, context ${this.ctx.state}`;
+    if (this.mutedByUs.has(video)) return 'audio: muted via video.muted (fallback)';
+    return 'audio: untouched';
+  }
+
   private hook(video: HTMLMediaElement): GainNode | null {
     try {
       this.ctx ??= new AudioContext();

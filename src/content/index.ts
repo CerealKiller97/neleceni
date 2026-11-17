@@ -17,8 +17,11 @@ const TAG = '[shut-down-577]';
 const MIN_INK = 0.002;
 /** Signatures closer than this are treated as the same caption image. */
 const SAME_IMAGE = 0.01;
-/** Re-run OCR on an unchanged image at least this often, in case a reading was unlucky. */
-const MAX_REUSE_MS = 10_000;
+/**
+ * A decisive reading (target / other) of an unchanged image is reused for at most this long.
+ * Unreadable images are never reused: the next frame may read fine (OCR takes ~20–110 ms).
+ */
+const MAX_REUSE_MS = 5_000;
 
 let settings: Settings = DEFAULT_SETTINGS;
 let state: MuteState = initialState();
@@ -91,6 +94,16 @@ function isWatchedVideo(video: HTMLVideoElement): boolean | null {
   return false;
 }
 
+/**
+ * May the last reading stand in for a new one? A target reading may (it only keeps the mute on).
+ * Another-speaker readings count towards un-muting, so while muted each one must be a fresh OCR
+ * result; otherwise one misread of a still image would add up to all the confirmations.
+ */
+function canReuse(o: Observation): boolean {
+  if (o.kind === 'target') return true;
+  return o.kind === 'other' && !isMuted(state) && state.override === null;
+}
+
 async function ocr(image: string): Promise<OcrResponse> {
   const req: OcrRequest = { type: 'ocr', image, langs: settings.langs };
   return (await chrome.runtime.sendMessage(req)) as OcrResponse;
@@ -122,7 +135,12 @@ async function tick(): Promise<void> {
   if (cap.ink < MIN_INK) {
     obs = { kind: 'none' };
     lastOcrText = '(no caption)';
-  } else if (lastSig && signatureDistance(lastSig, cap.signature) < SAME_IMAGE && now - lastSigAt < MAX_REUSE_MS) {
+  } else if (
+    canReuse(lastObs) &&
+    lastSig &&
+    signatureDistance(lastSig, cap.signature) < SAME_IMAGE &&
+    now - lastSigAt < MAX_REUSE_MS
+  ) {
     obs = lastObs;
   } else {
     const res = await ocr(cap.dataUrl);
@@ -162,7 +180,12 @@ function render(player: HTMLElement): void {
     manual: state.override !== null,
     line: state.lastLine,
     note,
-    ...(settings.debug ? { debugImage: lastCapture?.dataUrl ?? '', debugText: lastOcrText } : {}),
+    ...(settings.debug
+      ? {
+          debugImage: lastCapture?.dataUrl ?? '',
+          debugText: `${lastOcrText}\n${trackedVideo ? gate.describe(trackedVideo) : ''}`,
+        }
+      : {}),
   });
 }
 

@@ -67,13 +67,30 @@ export function allowedErrors(tokenLength: number): number {
   return 0;
 }
 
-/** True when every word of `name` appears (fuzzily) in `line`. */
+/**
+ * True when `line` shows `name`.
+ *
+ * Every word of the name must be found in the line, fuzzily. At least one word must be found
+ * whole; the others may also be found as a recognisable piece, because letters over a bright
+ * background get lost: the replay read "Александар Вучић" as "А екса · р Вучић", where "екса"
+ * is a piece of "Александар". A piece must be at least 3 letters and 40 % of the word.
+ */
 export function lineMatchesName(line: string, name: string): boolean {
   const tokens = normalize(name).split(' ').filter(Boolean);
   if (!tokens.length) return false;
-  const compact = normalize(line).replace(/ /g, '');
+  const words = normalize(line).split(' ').filter(Boolean);
+  const compact = words.join('');
   if (!compact.length) return false;
-  return tokens.every((t) => substringDistance(compact, t) <= allowedErrors(t.length));
+
+  const whole = (t: string) => substringDistance(compact, t) <= allowedErrors(t.length);
+  const piece = (t: string) =>
+    words.some(
+      (w) => w.length >= Math.max(3, Math.ceil(t.length * 0.4)) && w.length < t.length &&
+        substringDistance(t, w) <= allowedErrors(w.length),
+    );
+
+  const found = tokens.map(whole);
+  return found.some(Boolean) && tokens.every((t, i) => found[i] || piece(t));
 }
 
 export interface OcrLine {
@@ -138,7 +155,8 @@ export function classify(
   const line = pickSpeakerLine(lines, imageHeight);
   if (!line) return { kind: 'none' };
   const hit = speakers.find((name) => lineMatchesName(line.text, name));
-  if (hit) return { kind: 'target', name: hit, line: cleanLine(line.text) };
+  // Report the configured spelling, not the (often garbled) OCR text.
+  if (hit) return { kind: 'target', name: hit, line: hit };
   // Another speaker needs a confident, name-shaped line: at least two real words.
   if (line.confidence >= minConfidence && nameWords(line.text).length >= 2) {
     return { kind: 'other', line: cleanLine(line.text) };

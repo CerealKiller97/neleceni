@@ -1,3 +1,4 @@
+import { keepGlyphs, limitsFor } from '../shared/glyphs.ts';
 import type { Region } from '../shared/settings.ts';
 
 export interface Capture {
@@ -25,8 +26,8 @@ const out = document.createElement('canvas');
 const outCtx = out.getContext('2d')!;
 
 /**
- * Crop the caption region from the current video frame and binarise it: pixels that are bright
- * and grey (the white caption letters) become black, everything else white.
+ * Crop the caption region from the current video frame and binarise it: letter-sized shapes of
+ * bright, grey pixels (the white caption letters) become black, everything else white.
  *
  * Returns null when the frame is not available. YouTube plays through MediaSource (blob: URLs),
  * so the canvas is not tainted and pixels can be read.
@@ -51,24 +52,30 @@ export function captureCaption(video: HTMLVideoElement, region: Region, whiteThr
   const img = workCtx.getImageData(0, 0, dw, dh);
   const px = img.data;
 
+  // 1. White, grey-ish pixels are candidate caption text.
+  const mask = new Uint8Array(dw * dh);
+  for (let p = 0, i = 0; p < mask.length; p++, i += 4) {
+    const r = px[i]!;
+    const g = px[i + 1]!;
+    const b = px[i + 2]!;
+    const lo = Math.min(r, g, b);
+    mask[p] = lo >= whiteThreshold && Math.max(r, g, b) - lo <= MAX_CHROMA ? 1 : 0;
+  }
+
+  // 2. Keep only letter-sized shapes (drops desks, papers, shirts).
+  const ink = keepGlyphs(mask, dw, dh, limitsFor(dh));
+
+  // 3. Black text on white for Tesseract, plus a coarse signature of what is left.
   const sig = new Uint32Array(SIG_W * SIG_H);
-  let ink = 0;
   for (let y = 0; y < dh; y++) {
     const sigRow = Math.min(SIG_H - 1, Math.floor((y * SIG_H) / dh)) * SIG_W;
     for (let x = 0; x < dw; x++) {
-      const i = (y * dw + x) * 4;
-      const r = px[i]!;
-      const g = px[i + 1]!;
-      const b = px[i + 2]!;
-      const lo = Math.min(r, g, b);
-      const isText = lo >= whiteThreshold && Math.max(r, g, b) - lo <= MAX_CHROMA;
-      const v = isText ? 0 : 255;
-      px[i] = px[i + 1] = px[i + 2] = v;
+      const p = y * dw + x;
+      const i = p * 4;
+      const isText = mask[p] === 1;
+      px[i] = px[i + 1] = px[i + 2] = isText ? 0 : 255;
       px[i + 3] = 255;
-      if (isText) {
-        ink++;
-        sig[sigRow + Math.min(SIG_W - 1, Math.floor((x * SIG_W) / dw))]! += 1;
-      }
+      if (isText) sig[sigRow + Math.min(SIG_W - 1, Math.floor((x * SIG_W) / dw))]! += 1;
     }
   }
 

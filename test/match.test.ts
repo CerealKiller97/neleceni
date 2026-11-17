@@ -23,6 +23,16 @@ describe('lineMatchesName', () => {
     assert.ok(lineMatchesName('__Александар Вучи ___ а', TARGET[0]!)); // real OCR output, last letter lost
     assert.ok(lineMatchesName('АлександарВучић', TARGET[0]!)); // words glued together
     assert.ok(lineMatchesName('ALEKSANDAR VUČIĆ', TARGET[0]!));
+    // Wide-shot readings from the replay: first name partly lost, surname intact.
+    assert.ok(lineMatchesName('А екса · р Вучић »“\' =“', TARGET[0]!));
+    assert.ok(lineMatchesName('ЦМ екса Вучић то', TARGET[0]!));
+  });
+  it('does not accept pieces alone or a matching first name with another surname', () => {
+    assert.ok(!lineMatchesName('екса Вучић', 'Вучић Александар Петровић'));
+    assert.ok(!lineMatchesName('Ана Вучић', TARGET[0]!));
+    assert.ok(!lineMatchesName('Александра Вуковић', TARGET[0]!));
+    assert.ok(!lineMatchesName('Александар Ђурић', TARGET[0]!));
+    assert.ok(!lineMatchesName('екса уци', TARGET[0]!));
   });
   it('does not match other people', () => {
     assert.ok(!lineMatchesName('Ана Брнабић', TARGET[0]!));
@@ -59,6 +69,19 @@ describe('classify', () => {
   });
   it('accepts a low-confidence line that still spells the target', () => {
     assert.equal(classify([line('Александар Вучи', 18, 30)], H, TARGET, 35).kind, 'target');
+  });
+  // Readings logged from the 17 Nov 2026 replay in a real browser.
+  it('handles real replay readings', () => {
+    const replay = (top: string, bottom: string, conf = 50) => [line(top, 18, conf), line(bottom, 82, conf)];
+    const k = (l: OcrLine[]) => classify(l, H, TARGET, 35).kind;
+    assert.equal(k(replay('Миленко Јованов —', 'Александар ВучиЋ- УСрбија побеђује', 54)), 'other');
+    assert.equal(k(replay('Миленко Јованбв. “У __', 'Александар ВучтЋ УСрбија побеђује.', 41)), 'other');
+    assert.equal(k(replay('у. ипенкађованов', 'ФЏДдександар Ву Србија побеђује', 50)), 'none');
+    assert.equal(k(replay('Александар Вучић :.', 'Александар Вучић обубија побеђује', 92)), 'target');
+    assert.equal(k(replay('"Халексан р Вучић “> 47 =“ ние', 'жрксан о Вужј у Србија побеђује и', 38)), 'target');
+    assert.equal(k(replay('"Фалекса дар Вучић % =', 'фудександар Ву у Србија побеђује |')), 'target');
+    // Wide shot: both caption lines merged into one; the group-line dash keeps it from counting.
+    assert.equal(k([line('__Алекбиндарвучнијрдајр Вучић - Сромја п', 18, 57)]), 'none');
   });
 });
 
